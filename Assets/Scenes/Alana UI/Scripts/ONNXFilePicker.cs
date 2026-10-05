@@ -3,12 +3,10 @@ using SFB; // StandaloneFileBrowser
 
 public class ONNXFilePicker : MonoBehaviour
 {
-    // Optional: drag a UI Text/TMP_Text here to display the chosen path
     public TMPro.TMP_Text selectedPathLabel;
-
-    // Call this from your button's OnClick()
     public void OpenONNXFilePicker()
     {
+        // provide a list of acceptable extensions
         var extensions = new[] { new ExtensionFilter("ONNX Model", "onnx") };
         var paths = StandaloneFileBrowser.OpenFilePanel("Select ONNX Model", "", extensions, false);
 
@@ -28,9 +26,8 @@ public class ONNXFilePicker : MonoBehaviour
         }
     }
 
-    // Hook point for whatever you want to do once a file is picked
     void OnModelSelected(string path)
     {
-        // e.g. load into Barracuda, store the path for later, etc.
+        //Not sure where to load it yet 
     }
 }

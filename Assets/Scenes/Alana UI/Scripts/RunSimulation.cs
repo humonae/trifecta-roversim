@@ -1,16 +1,18 @@
 using UnityEngine;
 
+//I think this should be attached to the runTraining Run Simulation button
 public class RunSimulation : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public State activeMode;
+    public void StartSim()
     {
-        
-    }
+        switch (activeMode)
+        {
+            case State.TRAIN:
+                break;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+            case State.EVALUATE:
+                break;
+        }
     }
 }
