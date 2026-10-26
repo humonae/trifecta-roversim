@@ -10,7 +10,7 @@ public class LoadMap : MonoBehaviour
 
     public TileGrid gridSelection;
 
-    Dictionary<string, GameObject[]> maps;
+    Dictionary<string, GameObject[]> maps; // Map name, dictionary of tiles
     readonly Dictionary<string, GameObject> currentTiles = new Dictionary<string, GameObject>();  // "C6" -> tile
     string currentMap = "";
 
@@ -30,19 +30,25 @@ public class LoadMap : MonoBehaviour
             Debug.Log("This map set doesn't exist");
             return;
         }
-        Debug.Log($"This map set \"{mapName}\" exists, setting current map and clearing current tiles");
-        currentMap = mapName;
-        currentTiles.Clear();
 
-        foreach (var tile in maps[mapName])
+        if(currentMap != mapName) // if they're the same, we do not have to remake the currentTilesList 
         {
-            if (tile == null) continue;
-            // tile names must end in the grid label, e.g. "Jezero_C6"
-            string label = tile.name.Substring(tile.name.LastIndexOf('_') + 1);
-            currentTiles[label] = tile;
+            Debug.Log($"This map set \"{mapName}\" exists, setting current map and clearing current tiles");
+            currentMap = mapName;
+            currentTiles.Clear();
+
+            foreach (var tile in maps[mapName])
+            {
+                if (tile == null) continue;
+                // tile names must end in the grid label, e.g. "Jezero_C6", C6 also works
+                string label = tile.name.Substring(tile.name.LastIndexOf('_') + 1);
+                currentTiles[label] = tile;
+            }
+
+            gridSelection.SetAvailable(currentTiles.Keys);   // grid turns green where tiles exist
         }
 
-        gridSelection.SetAvailable(currentTiles.Keys);   // grid turns green where tiles exist
+
     }
 
     public void LoadSelectedTile()
@@ -57,13 +63,17 @@ public class LoadMap : MonoBehaviour
     {
         if (currentTiles.Count == 0) return;
         var keys = new List<string>(currentTiles.Keys);
-        ShowOnly(keys[Random.Range(0, keys.Count)]);
+        string label = keys[Random.Range(0, keys.Count)];
+        ShowOnly(label);
+        gridSelection.selectFromLabel(label);
+
     }
 
     void ShowOnly(string label)
     {
         HideAll();                          // hides tiles from every map, not just this one
         currentTiles[label].SetActive(true);
+        gridSelection.selectedTile = label;
     }
 
     void HideAll()

@@ -102,7 +102,7 @@ public class TileGrid : MonoBehaviour,
         if (i < 0) return;
         highlight.color = available[i] ? Ok : No;
         string label = LabelFor(i);
-        infoMessage.text = available[i] ? label + message[1] : label + message[2];
+        infoMessage.text = available[i] ? message[1] : message[2];
         Place(highlight, i);
     }
 
@@ -115,13 +115,7 @@ public class TileGrid : MonoBehaviour,
     public void OnPointerClick(PointerEventData e)
     {
         int i = TileAt(e);
-        if (i < 0 || !available[i]) return;
-        selected = i;
-        selectedTile = LabelFor(i);
-        selection.enabled = true;
-        infoMessage.text = $"{selectedTile}{message[3]}";
-        toBeLoaded.text = $"{currMap} {selectedTile} selected.";
-        Place(selection, i);
+        SelectionRuntime(i);
     }
 
     public void Deselect() //reset function pretty much
@@ -136,5 +130,22 @@ public class TileGrid : MonoBehaviour,
     public void setCurrentMap(string m)
     {
         currMap = m;
+    }
+
+    public void SelectionRuntime(int i)
+    {
+        if (i < 0 || !available[i]) return;
+        selected = i;
+        selectedTile = LabelFor(i);
+        selection.enabled = true;
+        infoMessage.text = $"{selectedTile}{message[3]}";
+        toBeLoaded.text = $"{currMap} {selectedTile} selected.";
+        Place(selection, i);
+    }
+
+    public void selectFromLabel(string label)
+    {
+        int i = IndexFor(label);
+        SelectionRuntime(i);
     }
 }
