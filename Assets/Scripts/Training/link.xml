@@ -1,0 +1,5 @@
+<linker>
+    <assembly fullname="Unity.ML-Agents">
+        <type fullname="Unity.MLAgents.Academy" preserve="all"/>
+    </assembly>
+</linker>

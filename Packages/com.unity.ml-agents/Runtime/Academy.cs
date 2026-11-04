@@ -363,8 +363,16 @@ namespace Unity.MLAgents
         }
 
         // Used to read Python-provided environment parameters
+        internal const string k_RuntimePortVariable = "MLAGENTS_RUNTIME_PORT";
+
         static int ReadPortFromArgs()
         {
+            var runtimePort = Environment.GetEnvironmentVariable(k_RuntimePortVariable);
+            if (int.TryParse(runtimePort, out var parsedRuntimePort) && parsedRuntimePort > 0)
+            {
+                return parsedRuntimePort;
+            }
+
             var args = Environment.GetCommandLineArgs();
             var inputPort = "";
             for (var i = 0; i < args.Length; i++)
