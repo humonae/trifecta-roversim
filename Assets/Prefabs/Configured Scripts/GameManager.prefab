@@ -1,0 +1,199 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6605497031338955241
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 410552835298465218}
+  - component: {fileID: 7336855243682529266}
+  - component: {fileID: 6455376546211775665}
+  - component: {fileID: 2348932033155430899}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &410552835298465218
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 224.50926, y: 659.2008, z: -37.91376}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7336855243682529266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abceda4d9f0757e43ab060c3705827a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Rocks.RockPlacer
+  rockPrefabs:
+  - {fileID: 2720510755711993569, guid: fce0953aa191efa449dd594eaa73f601, type: 3}
+  - {fileID: 4234056167966654306, guid: e19681446d8ae63439fc56d8a8b4736b, type: 3}
+  - {fileID: 943031432951862646, guid: b9cb24a8efeeb604abdf6f302754a593, type: 3}
+  - {fileID: 4027790890482046406, guid: 2220a46417aeab14bbb068abf85dd267, type: 3}
+  - {fileID: 5356182827120067683, guid: af01cc1fb796adc4895522fdad976461, type: 3}
+  - {fileID: 2321273700159269569, guid: c980d8f8281bd9844afe83dab7edeace, type: 3}
+  - {fileID: 6752410724263185822, guid: ed549f50e94804945af817dd0ab0737d, type: 3}
+  pebblePrefabs:
+  - {fileID: 2254581649543093113, guid: 38270ef1ca56d4f4b825be5d83734923, type: 3}
+  embeddedness: 0.2
+  alignToSurface: 0.6
+  shapeVariation: 0.15
+  minGap: 0.1
+  attemptsPerRock: 30
+  rockSizes:
+    minSize: 0.15
+    maxSize: 1.5
+    exponent: 2.5
+  pebbleSizes:
+    minSize: 0.03
+    maxSize: 0.12
+    exponent: 1.5
+  pebblesPerRock: 4
+  rockDrawDistance: 400
+  pebbleDrawDistance: 150
+  minScreenPixels: 3
+  lod0ScreenPixels: 150
+  clustering:
+    strength: 0.6
+    patchSize: 30
+  maxRocks: 50000
+  maxPebbles: 500000
+  previewTarget: {fileID: 0}
+  previewDensity: 0.05
+--- !u!114 &6455376546211775665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ffeb4598c064511908600eb32003ac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Training.TrainingOrganizer
+  loadMap: {fileID: 0}
+  rockPlacer: {fileID: 7336855243682529266}
+  roverPrefab: {fileID: 5444675609017222369, guid: 3347b20c9cc41464d9b326dd88ec7e30, type: 3}
+  simulationManager: {fileID: 0}
+  outputPicker: {fileID: 0}
+  instancesRoot: {fileID: 0}
+  instanceCount: 1
+  defaults:
+    EpochMinutes: 10
+    EpisodeSeconds: 60
+    NewTileEachEpoch: 1
+    IterationUnit: 1
+    DefaultIterations: 1000
+    ObstacleSliderMax: 10
+    MaxRockDensity: 0.1
+    DefaultResultsDirectory: results
+    UseFixedSeed: 0
+    Seed: 0
+  arena:
+    Size: 100
+    EdgeMargin: 5
+    MinGoalDistance: 10
+    MaxGoalDistance: 40
+    MaxSlope: 20
+    SpawnGap: 0.1
+    SpawnClearRadius: 2.5
+    GoalClearRadius: 1.5
+    PlacementAttempts: 50
+  rules:
+    GoalRadius: 1.5
+    MaxTiltAngle: 70
+    GoalReward: 1
+    FailurePenalty: -1
+    TimeoutReward: 0
+    ProgressRewardPerMeter: 0.05
+    TimePenaltyPerSecond: 0.01
+  earlyStopping:
+    Window: 100
+    MinSuccessRate: 0.9
+    MaxAverageGoalSeconds: 0
+  logEpisodes: 1
+  python:
+    PythonExecutable: 
+    VenvFolder: venv
+    InstallAutomatically: 1
+    MinPythonVersion: 3.10.1
+    MaxPythonVersion: 3.10.12
+    MlAgentsPackage: mlagents==1.1.0
+    MinMlAgentsVersion: 1.1.0
+    SupportPackages: setuptools<70
+    TorchPackage: torch>=2.1.1,<=2.8.0
+    MaxTorchVersion: 2.8.99
+    WindowsTorchIndexUrl: https://download.pytorch.org/whl/cu121
+  trainer:
+    TimeScale: 2
+    StartupTimeout: 180
+    ShutdownTimeout: 60
+    ConnectionTimeout: 604800
+    ExtraArguments: 
+  trainerConfig:
+    NetworkPresets:
+    - Name: Small
+      HiddenUnits: 128
+      Layers: 2
+      VisualEncoder: simple
+    - Name: Medium
+      HiddenUnits: 256
+      Layers: 2
+      VisualEncoder: simple
+    - Name: Large
+      HiddenUnits: 512
+      Layers: 3
+      VisualEncoder: simple
+    BatchSize: 1024
+    BufferSize: 20480
+    LearningRate: 0.0003
+    Beta: 0.005
+    Epsilon: 0.2
+    Lambda: 0.95
+    NumEpoch: 3
+    Gamma: 0.99
+    NormalizeObservations: 0
+    TimeHorizon: 128
+    SummaryFrequency: 10000
+    CheckpointInterval: 200000
+    KeepCheckpoints: 5
+--- !u!114 &2348932033155430899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d01e7a0f158c48cb8f5fb110a183c281, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Training.TrainingControls
+  organizer: {fileID: 0}
+  playButton: {fileID: 0}
+  pauseButton: {fileID: 0}
+  stopButton: {fileID: 0}
+  startButtons:
+  - {fileID: 0}

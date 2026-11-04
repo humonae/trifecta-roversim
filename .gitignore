@@ -111,3 +111,22 @@ Assets/TextMesh Pro/Examples*&*Extras.meta
 
 # Ml-agents logs
 Assets/ML-Agents/Timers/
+
+# Python environment created by first-run setup (several GB)
+/venv/
+/.venv/
+
+# Training output: checkpoints, TensorBoard logs, generated trainer configs, exported models
+/results/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Unity scene auto-recovery backups
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
+
+# OS clutter
+.DS_Store
+Thumbs.db

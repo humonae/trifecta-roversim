@@ -48,6 +48,8 @@ namespace Rover
         private DriveCommand command;
         private Vector3? target;
 
+        public event System.Action<RoverAIController> EpisodeBeginning;
+
         public DriveCommand Command => command;
         public ArticulationBody Chassis => chassis;
         public Pose StartPose => startPose;
@@ -87,7 +89,10 @@ namespace Rover
 
         public override void OnEpisodeBegin()
         {
-            ResetRover(startPose.position, startPose.rotation);
+            if (EpisodeBeginning != null)
+                EpisodeBeginning.Invoke(this);
+            else
+                ResetRover(startPose.position, startPose.rotation);
         }
 
         // Resets rover to its defaults, teleports it to the provided position (and rotation)
@@ -154,7 +159,10 @@ namespace Rover
 
         private static float JointAngle(ArticulationBody joint, float scale)
         {
-            return joint != null ? joint.jointPosition[0] * Mathf.Rad2Deg / scale : 0f;
+            if (joint == null || joint.dofCount == 0 || joint.jointPosition.dofCount == 0)
+                return 0f;
+
+            return joint.jointPosition[0] * Mathf.Rad2Deg / scale;
         }
 
         private void ValidateSetup()

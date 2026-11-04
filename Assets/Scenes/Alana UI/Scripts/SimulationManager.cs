@@ -72,6 +72,9 @@ public class SimulationManager : MonoBehaviour
 
     [Header("Optional UI")]
     public TMPro.TMP_Text statusLabel;
+
+    [Header("Backend")]
+    public Training.TrainingOrganizer trainingOrganizer;
     public void StartSimulation()
     {
         // if (!settings.Validate(out string error))
@@ -81,6 +84,12 @@ public class SimulationManager : MonoBehaviour
         // }
 
         Debug.Log("StartSimulation called");
+
+        if (settings.simMode == State.TRAIN)
+        {
+            if (trainingOrganizer == null) { SetStatus("Assign the TrainingOrganizer on the SimulationManager."); return; }
+            trainingOrganizer.StartTraining(settings);
+        }
 
         // pass settings to items that do the work, have public game objects, call functions with parameters likely
         //   terrainLoader.LoadChunk(settings.chunkFileName, settings.terrainHeightY);
