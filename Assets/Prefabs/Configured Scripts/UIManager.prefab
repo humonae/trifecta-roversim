@@ -1,0 +1,140 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6823775150430522652
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8954265563548094163}
+  - component: {fileID: 5975677305689824757}
+  - component: {fileID: 4119066198541920130}
+  - component: {fileID: 9101741862354548425}
+  - component: {fileID: 6469686095534180725}
+  m_Layer: 0
+  m_Name: UIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8954265563548094163
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6823775150430522652}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 247.1275, y: 276.07794, z: 183.52731}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5975677305689824757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6823775150430522652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eaca4e588ea59fb4bbb49bf564992d6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShowHidePanel
+  Panel1: {fileID: 0}
+  Panel2: {fileID: 0}
+  panel: {fileID: 0}
+--- !u!114 &4119066198541920130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6823775150430522652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ada6aa6fd540c1b46ae40727ebdb22c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimulationManager
+  settings:
+    networkArchitecture: 0
+    maxIterations: 0
+    earlyStopping: 0
+    mapName: 
+    chunkFileName: 
+    terrainHeightY: 0
+    obstacleDensity: 0
+    rocks: 1
+    pits: 1
+    craters: 1
+    items: 1
+    simMode: 0
+    simulationActive: 0
+    loadedModelPath: 
+    checkpointOutputFolder: 
+    onnxOutputFolder: 
+    onnxFileName: trained_model
+    behaviorName: RoverAgent
+    roverStartPosition: {x: 0, y: 0, z: 0}
+    position: {fileID: 0}
+  statusLabel: {fileID: 0}
+  trainingOrganizer: {fileID: 0}
+--- !u!114 &9101741862354548425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6823775150430522652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 015825e88fb46224e93d149ba7b059e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ONNXFilePicker
+  outputPathLabel:
+  - {fileID: 0}
+  - {fileID: 0}
+  outputPathFileName:
+  - {fileID: 0}
+  - {fileID: 0}
+  selectedFileLabel:
+  - {fileID: 0}
+  - {fileID: 0}
+  mode: 0
+--- !u!114 &6469686095534180725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6823775150430522652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00981cf7eb8fc1f4f9a374c1050f856b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LoadMap
+  JezeroTerrains:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  TestTerrain: []
+  TestTerrain2: []
+  gridSelection: {fileID: 0}
