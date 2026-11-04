@@ -159,7 +159,7 @@ namespace Training
             float lineHeight = fontSize + 5f;
             float contentWidth = Mathf.Max(view.width - 20f, widestLine * fontSize * 0.6f + 20f);
             var content = new Rect(0f, 0f, contentWidth, lines.Count * lineHeight);
-            float bottom = Mathf.Max(0f, content.height - view.height);
+            float bottom = Mathf.Max(0f, content.height - VisibleHeight(view, content));
 
             if (follow)
                 scroll.y = bottom;
@@ -179,6 +179,18 @@ namespace Training
 
             if (!Mathf.Approximately(scroll.y, before.y))
                 follow = scroll.y >= bottom - 1f;
+        }
+
+        private static float VisibleHeight(Rect view, Rect content)
+        {
+            GUIStyle vertical = GUI.skin.verticalScrollbar;
+            GUIStyle horizontal = GUI.skin.horizontalScrollbar;
+            float verticalWidth = vertical.fixedWidth + vertical.margin.left;
+            float horizontalHeight = horizontal.fixedHeight + horizontal.margin.top;
+
+            bool hasVertical = content.height > view.height;
+            bool hasHorizontal = content.width > view.width - (hasVertical ? verticalWidth : 0f);
+            return hasHorizontal ? view.height - horizontalHeight : view.height;
         }
 
         private void RebuildIfNeeded()
