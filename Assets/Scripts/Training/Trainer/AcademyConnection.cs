@@ -10,23 +10,14 @@ namespace Training
     {
         public const int TrainerPort = 5004;
         public const string RuntimePortField = "k_RuntimePortVariable";
+        public const string RuntimePortVariable = "MLAGENTS_RUNTIME_PORT";
         private const string PortFlag = "--mlagents-port";
-
-        public static string RuntimePortVariable
-        {
-            get
-            {
-                FieldInfo field = typeof(Academy).GetField(RuntimePortField, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-                return field != null && field.IsLiteral ? field.GetRawConstantValue() as string : null;
-            }
-        }
-
-        public static bool IsPackagePatched => RuntimePortVariable != null;
+        private const string PatchMenu = "Tools > RoverSim > Patch ML-Agents For In-App Training";
 
         public static bool CanConnect(out string error)
         {
             error = null;
-            if (Application.isEditor || IsPackagePatched)
+            if (Application.isEditor)
                 return true;
 
             string[] args = Environment.GetCommandLineArgs();
@@ -43,9 +34,7 @@ namespace Training
                 return false;
             }
 
-            error = "This build can't connect to the Python trainer. Run Tools > RoverSim > Patch ML-Agents For In-App Training in the editor and rebuild, " +
-                    $"or start the build with {PortFlag} {TrainerPort}.";
-            return false;
+            return true;
         }
 
         public static bool Connect(QuitCommandHandler onTrainerQuit, out string error)
@@ -58,10 +47,9 @@ namespace Training
             if (!academy.IsCommunicatorOn)
             {
                 Disconnect();
-                error = IsPackagePatched
-                    ? "Python is running but ML-Agents could not connect to it."
-                    : $"Python is running but ML-Agents could not connect to it. Check that Project Settings > ML-Agents > Connect to Trainer is on and the editor port is {TrainerPort}, " +
-                      "or run Tools > RoverSim > Patch ML-Agents For In-App Training.";
+                error = Application.isEditor
+                    ? $"Python is running but ML-Agents could not connect to it. Check that Project Settings > ML-Agents > Connect to Trainer is on and the editor port is {TrainerPort}."
+                    : $"Python is running but this build could not connect to it. Run {PatchMenu} in the editor, then rebuild.";
                 return false;
             }
 
@@ -82,9 +70,7 @@ namespace Training
 
         private static void SetRuntimePort(string port)
         {
-            string variable = RuntimePortVariable;
-            if (variable != null)
-                Environment.SetEnvironmentVariable(variable, port);
+            Environment.SetEnvironmentVariable(RuntimePortVariable, port);
         }
 
         private static bool RedirectQuitCommand(Academy academy, QuitCommandHandler handler)
