@@ -77,11 +77,6 @@ public class TrainingSettings : MonoBehaviour
     
     public string ModelName;
 
-    public void ResetToDefaults()
-    {
-        
-    }
-
     public void SetNetworkArchitecture(string name) => NetworkArchitecture = name;
  
     // For a dropdown, which sends the selected option's index.

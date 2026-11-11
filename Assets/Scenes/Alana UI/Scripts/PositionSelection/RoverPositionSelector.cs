@@ -8,6 +8,7 @@ public class RoverPositionSelector : MonoBehaviour
     bool positionSet = false;
     private Vector3? startPosition;
     private Vector3? endPosition;
+    public float radius;
 
     void Update()
     {
