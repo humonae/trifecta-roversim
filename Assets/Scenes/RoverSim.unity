@@ -15512,6 +15512,32 @@ MonoBehaviour:
   GoalPos: {x: 0, y: 0, z: 0}
   ModelOutputPath: 
   ModelName: 
+--- !u!114 &1043495618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1043495615}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70986bbb70ac4dc48b34abadb9148912, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EvaluationSettings
+  ModelText: {fileID: 0}
+  ObstacleDensitySlider: {fileID: 0}
+  NumberEpisodes: {fileID: 0}
+  StartingSeedText: {fileID: 0}
+  SelectedModel: 
+  EpisodeCount: 5000
+  RandomPosition: 1
+  ObstacleDensity: 5
+  RocksOn: 0
+  StartPos: {x: 0, y: 0, z: 0}
+  GoalPos: {x: 0, y: 0, z: 0}
+  StartingSeed: 0
+  ModelOutputPath: 
+  ModelName: 
 --- !u!1 &1051569816
 GameObject:
   m_ObjectHideFlags: 0
@@ -43402,6 +43428,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6823775150430522652, guid: 7d99cda5fa2947c4eb4fa5681fac59db, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1043495616}
+    - targetCorrespondingSourceObject: {fileID: 6823775150430522652, guid: 7d99cda5fa2947c4eb4fa5681fac59db, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1043495618}
   m_SourcePrefab: {fileID: 100100000, guid: 7d99cda5fa2947c4eb4fa5681fac59db, type: 3}
 --- !u!114 &4948224744392607419
 MonoBehaviour:
