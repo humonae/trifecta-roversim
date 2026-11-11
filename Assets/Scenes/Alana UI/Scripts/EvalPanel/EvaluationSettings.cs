@@ -9,17 +9,26 @@ using UnityEngine.UI;
 // so keep the field names in sync with them.
 
 public class EvaluationSettings : MonoBehaviour
-{
-    [Header("Default Training Values")]
-
+{  
     //public EvaluationDefaults defaults;
-    
-
-   
+    [Header("UI elements")]
     public TMP_Text ModelText;
     public Slider ObstacleDensitySlider; 
     public TMP_InputField NumberEpisodes;
     public TMP_Text StartingSeedText;
+
+    [Header("Variables")]
+    //Default values for now 
+    public string SelectedModel = "None";
+    public int EpisodeCount = 5000;
+    public bool RandomPosition = true;
+    public float ObstacleDensity = 5;
+    public bool RocksOn; //set to 0 if obstacle density is 0
+    public Vector3 StartPos;
+    public Vector3 GoalPos;
+    public int StartingSeed;
+    public string ModelName;
+    private int RunID; //?
 
     // not sure how to handle runspeed, so it's just there
     //note, the selected map is not kept as a setting because it's handled by load map
@@ -30,36 +39,15 @@ public class EvaluationSettings : MonoBehaviour
     {
         Refresh();
     }
-    private string[] architectureNames = {"Small","Medium","Large"};
-    public string SelectedModel;
-    public int EpisodeCount = 5000;
-    public bool RandomPosition = true;
-    public float ObstacleDensity = 5;
-    public bool RocksOn; //set to 0 if obstacle density is 0
-    public Vector3 StartPos;
-
-    public Vector3 GoalPos;
-
-    public int StartingSeed;
-
-    public string ModelOutputPath;
-    
-    public string ModelName;
- 
-    // For a dropdown, which sends the selected option's index.
- 
-    // For an input field, which sends text.
     public void SetEpisodes(string text)
     {
         if (int.TryParse(text, out int n))
             EpisodeCount = n;
-    }
- 
+    } 
     public void SetSeed(float a)
     {
         //random
     }
- 
     public void SetObstacleDensity(float value)
     {
         ObstacleDensity = value;
@@ -77,12 +65,16 @@ public class EvaluationSettings : MonoBehaviour
  
     public void SetGoalPosition(Vector3 position) => GoalPos = position;
  
-    public void SetModelOutputPath(string path) => ModelOutputPath = path;
- 
     // public void SetModelName(string name) => ModelName = name;
 
     public void Refresh()
     {
+        //ideally replace with the default values set in evaluationDefaults rather than reassigning them to their current values
+        SetRocks();
+        ModelText.text = "None";
+        ObstacleDensitySlider.SetValueWithoutNotify(ObstacleDensity);
+        NumberEpisodes.SetTextWithoutNotify(EpisodeCount.ToString());
+        StartingSeedText.text = StartingSeed.ToString();
     }
 
 

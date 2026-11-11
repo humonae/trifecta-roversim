@@ -35,7 +35,6 @@ public class TrainingSettings : MonoBehaviour
 
     public TrainingDefaults defaults;
 
-    
     public TMP_Dropdown NADropdown;
     public TMP_InputField IterInput;
     public Slider EarlyStopSlider;
@@ -54,10 +53,10 @@ public class TrainingSettings : MonoBehaviour
     private string[] architectureNames = {"Small","Medium","Large"};
     public string NetworkArchitecture = "Small";
     public int Iterations = 5000;
+
     public bool EarlyStopping = true;
-
     public float SuccessTarget = 0.9f;
-
+    
     public bool FixedSeed = true;
 
     public bool NewTileEachEpoch = true;
@@ -136,7 +135,8 @@ public class TrainingSettings : MonoBehaviour
     // public void SetModelName(string name) => ModelName = name;
 
     public void Refresh()
-    {
+    {   
+        //ideally replace with the default values set in trainingDefaults rather than reassigning them to their current values
         int i = NADropdown.options.FindIndex(o => o.text == NetworkArchitecture);
         if (i >= 0) NADropdown.SetValueWithoutNotify(i);
 
