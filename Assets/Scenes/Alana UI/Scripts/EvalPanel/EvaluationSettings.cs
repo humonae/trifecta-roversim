@@ -44,9 +44,11 @@ public class EvaluationSettings : MonoBehaviour
         if (int.TryParse(text, out int n))
             EpisodeCount = n;
     } 
-    public void SetSeed(float a)
+    public void SetSeed()
     {
         //random
+        StartingSeed = Random.Range(0, int.MaxValue);
+        StartingSeedText.text = StartingSeed.ToString();
     }
     public void SetObstacleDensity(float value)
     {
@@ -74,7 +76,8 @@ public class EvaluationSettings : MonoBehaviour
         ModelText.text = "None";
         ObstacleDensitySlider.SetValueWithoutNotify(ObstacleDensity);
         NumberEpisodes.SetTextWithoutNotify(EpisodeCount.ToString());
-        StartingSeedText.text = StartingSeed.ToString();
+        SetSeed();
+        // StartingSeedText.text = StartingSeed.ToString();
     }
 
 
