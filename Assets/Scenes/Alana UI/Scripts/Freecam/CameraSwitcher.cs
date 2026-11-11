@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Cinemachine;
+using UnityEngine.InputSystem; // Required for the new Input System
 using Training; // Make sure this matches your namespace
 
 public class CameraSwitcher : MonoBehaviour
@@ -8,7 +9,7 @@ public class CameraSwitcher : MonoBehaviour
     public CinemachineCamera freeCam; // assign in inspector
 
     private TrainingInstance currentTrainingInstance;
-    private CinemachineCamera roverCam;
+    public CinemachineCamera roverCam;
     private bool isFreeCamActive = true;
 
     void Update()
@@ -21,14 +22,14 @@ public class CameraSwitcher : MonoBehaviour
             {
                 roverCam = currentTrainingInstance.roverCamera;
                 
-                // Set initial priorities: Rover cam stanby (0), Freecam active (10)
+                // Set initial priorities: Rover cam standby (0), Freecam active (10)
                 roverCam.Priority = 0;
                 freeCam.Priority = 10;
             }
         }
 
-        // 2. Handle the toggle when pressing 'V'
-        if (roverCam != null && Input.GetKeyDown(KeyCode.V))
+        // 2. Handle the toggle when pressing 'V' using the new Input System
+        if (roverCam != null && Keyboard.current != null && Keyboard.current.vKey.wasPressedThisFrame)
         {
             isFreeCamActive = !isFreeCamActive;
 

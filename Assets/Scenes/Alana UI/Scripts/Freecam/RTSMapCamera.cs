@@ -1,30 +1,27 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+// Make sure to include this namespace if using the new Input System classes directly:
+// using UnityEngine.InputSystem; 
 
 public class RTSMapCamera : MonoBehaviour
 {
-    public float moveSpeed = 50f;
-    public float zoomSpeed = 20f;
-    public float minHeight = 5f;
-    public float maxHeight = 100f;
+    public float moveSpeed = 20f;
 
     void Update()
     {
-        // 1. Keyboard Panning (WASD or Arrow keys)
-        float moveX = Input.GetAxis("Horizontal"); // A/D
-        float moveZ = Input.GetAxis("Vertical");   // W/S
+        // Replace Input.GetAxis with new Input System checks:
+        float moveX = 0f;
+        float moveZ = 0f;
+
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) moveX += 1f;
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) moveX -= 1f;
+            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) moveZ += 1f;
+            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) moveZ -= 1f;
+        }
 
         Vector3 moveDir = new Vector3(moveX, 0f, moveZ).normalized;
         transform.Translate(moveDir * moveSpeed * Time.deltaTime, Space.World);
-
-        // 2. Smooth Zooming (Mouse Scroll Wheel)
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        Vector3 zoomDir = new Vector3(0, -scroll * zoomSpeed, 0);
-        
-        // Clamp height constraints over the Mars heightmap
-        Vector3 nextPos = transform.position + zoomDir;
-        if (nextPos.y >= minHeight && nextPos.y <= maxHeight)
-        {
-            transform.position = nextPos;
-        }
     }
 }

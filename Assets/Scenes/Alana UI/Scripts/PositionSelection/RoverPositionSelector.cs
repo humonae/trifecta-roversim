@@ -5,6 +5,7 @@ public class RoverPositionSelector : MonoBehaviour
     public Camera cam;
     public LayerMask terrainLayer;
     
+    bool positionSet = false;
     private Vector3? startPosition;
     private Vector3? endPosition;
 
@@ -23,6 +24,7 @@ public class RoverPositionSelector : MonoBehaviour
 
     void HandlePointSelection(Vector3 clickedPoint)
     {
+
         if (startPosition == null)
         {
             startPosition = clickedPoint;
@@ -33,6 +35,9 @@ public class RoverPositionSelector : MonoBehaviour
             endPosition = clickedPoint;
             Debug.Log($"End Position Set: {endPosition}");
             // Trigger popup UI window here
+            positionSet = true;
         }
     }
+
+
 }
