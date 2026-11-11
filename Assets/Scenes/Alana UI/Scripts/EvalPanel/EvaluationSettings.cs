@@ -1,5 +1,5 @@
 using TMPro;
-using Training;
+//using Evaluation;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,16 +14,16 @@ public class EvaluationSettings : MonoBehaviour
 
     //public EvaluationDefaults defaults;
     
-    public TMP_Dropdown NADropdown;
-    public TMP_InputField NumberEpisodes;
-    public Slider EarlyStopSlider;
-    public Slider SuccessSlider;
-    public Slider FixedSeedToggle;
-    public Slider EpochToggle;
 
-    public TMP_Text Folder;
-    public TMP_Text Model;
-    public Slider ObstacleDensitySlider;
+   
+    public TMP_Text ModelText;
+    public Slider ObstacleDensitySlider; 
+    public TMP_InputField NumberEpisodes;
+    public TMP_Text StartingSeedText;
+
+    // not sure how to handle runspeed, so it's just there
+    //note, the selected map is not kept as a setting because it's handled by load map
+    // though it might be a good idea to put it in here... I'm not sure because my brain is EMPTY!
 
 
     public void Start()
