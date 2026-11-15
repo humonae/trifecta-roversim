@@ -15,14 +15,17 @@ namespace Training
             lastDistance = distanceToGoal;
         }
 
-        public float Step(float distanceToGoal, float forwardSpeed, float deltaTime)
+        public float Step(float distanceToGoal, float forwardSpeed, bool wheelsOnRock, bool chassisOnRock, float deltaTime)
         {
             float progress = lastDistance - distanceToGoal;
             lastDistance = distanceToGoal;
             float reversed = forwardSpeed < 0f ? -forwardSpeed * deltaTime : 0f;
+            float rockPenalty = (wheelsOnRock ? rules.WheelRockPenaltyPerSecond : 0f)
+                                + (chassisOnRock ? rules.ChassisRockPenaltyPerSecond : 0f);
+
             return progress * rules.ProgressRewardPerMeter
                    - reversed * rules.ReversePenaltyPerMeter
-                   - rules.TimePenaltyPerSecond * deltaTime;
+                   - (rules.TimePenaltyPerSecond + rockPenalty) * deltaTime;
         }
 
         public float Final(EpisodeOutcome outcome)
