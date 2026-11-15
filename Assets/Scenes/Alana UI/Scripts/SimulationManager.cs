@@ -73,23 +73,49 @@ public class SimulationManager : MonoBehaviour
     [Header("Optional UI")]
     public TMPro.TMP_Text statusLabel;
 
+    [Header("Panel settings")]
+    // What the Training and Evaluation panels hold. The organizers read their values from these.
+    public TrainingSettings trainingSettings;
+    public EvaluationSettings evaluationSettings;
+
     [Header("Backend")]
     public Training.TrainingOrganizer trainingOrganizer;
+    public Evaluation.EvaluationOrganizer evaluationOrganizer;
+
+    void Awake()
+    {
+        Instance = this;
+        if (trainingSettings == null) trainingSettings = FindAnyObjectByType<TrainingSettings>();
+        if (evaluationSettings == null) evaluationSettings = FindAnyObjectByType<EvaluationSettings>();
+        if (trainingOrganizer == null) trainingOrganizer = FindAnyObjectByType<Training.TrainingOrganizer>();
+        if (evaluationOrganizer == null) evaluationOrganizer = FindAnyObjectByType<Evaluation.EvaluationOrganizer>();
+    }
+
+    void OnEnable()
+    {
+        if (evaluationOrganizer == null) return;
+        evaluationOrganizer.RunStarted += OnEvaluationStarted;
+        evaluationOrganizer.EpisodeFinished += OnEvaluationEpisode;
+        evaluationOrganizer.Finished += OnEvaluationFinished;
+    }
+
+    void OnDisable()
+    {
+        if (evaluationOrganizer == null) return;
+        evaluationOrganizer.RunStarted -= OnEvaluationStarted;
+        evaluationOrganizer.EpisodeFinished -= OnEvaluationEpisode;
+        evaluationOrganizer.Finished -= OnEvaluationFinished;
+    }
+
+    // The Run button. Starts training or evaluation depending on the selected tab.
     public void StartSimulation()
     {
-        // if (!settings.Validate(out string error))
-        // {
-        //     SetStatus(error);
-        //     return;
-        // }
-
         Debug.Log("StartSimulation called");
 
         if (settings.simMode == State.TRAIN)
-        {
-            if (trainingOrganizer == null) { SetStatus("Assign the TrainingOrganizer on the SimulationManager."); return; }
-            trainingOrganizer.StartTraining(settings);
-        }
+            StartTraining();
+        else
+            StartEvaluation();
 
         // pass settings to items that do the work, have public game objects, call functions with parameters likely
         //   terrainLoader.LoadChunk(settings.chunkFileName, settings.terrainHeightY);
@@ -98,6 +124,45 @@ public class SimulationManager : MonoBehaviour
         //   else { /* load settings.loadedModelPath into the agent */ }
 
         //SetStatus($"Starting on {settings.mapName} / {settings.chunkFileName}");
+    }
+
+    public void StartTraining()
+    {
+        if (trainingOrganizer == null) { SetStatus("Assign the TrainingOrganizer on the SimulationManager."); return; }
+        if (trainingSettings == null) { SetStatus("Add TrainingSettings (on UIManager) and assign it on the SimulationManager."); return; }
+        if (evaluationOrganizer != null && evaluationOrganizer.State != Training.TrainingState.Idle)
+        { SetStatus("Stop the evaluation before starting training."); return; }
+        trainingOrganizer.StartTraining(trainingSettings);
+    }
+
+    public void StartEvaluation()
+    {
+        if (evaluationOrganizer == null) { SetStatus("Add an EvaluationOrganizer (on GameManager) and assign it on the SimulationManager."); return; }
+        if (evaluationSettings == null) { SetStatus("Add EvaluationSettings (on UIManager) and assign it on the SimulationManager."); return; }
+        if (trainingOrganizer != null && trainingOrganizer.State != Training.TrainingState.Idle)
+        { SetStatus("Stop training before running an evaluation."); return; }
+        evaluationOrganizer.StartEvaluation(evaluationSettings);
+    }
+
+    // ---- Evaluation results -> UI ----
+    // Call the Evaluation panel's UI scripts from these. Everything the Metrics and Runs sections show
+    // is on the report (see Evaluation.EvaluationReport); past runs are in Evaluation.EvaluationHistory.LoadAll().
+
+    // A run started: report.RunNumber, report.Details ("model - selection - # episodes - seed"), no episodes yet.
+    void OnEvaluationStarted(Evaluation.EvaluationReport report)
+    {
+    }
+
+    // After every episode: the report already includes it (SuccessRate, SuccessRateLow/High, TimedOut,
+    // Collisions, AverageSecondsToGoal, FailedHitRock, ...). episode is the one that just finished.
+    void OnEvaluationEpisode(Evaluation.AttemptResult episode, Evaluation.EvaluationReport report)
+    {
+    }
+
+    // The run ended and was saved (savedPath is null if saving failed). Add it to the Runs list here;
+    // report.SuccessChangePoints is the change from the previous run when report.HasPrevious.
+    void OnEvaluationFinished(Evaluation.EvaluationReport report, string savedPath)
+    {
     }
 
     void SetStatus(string message)

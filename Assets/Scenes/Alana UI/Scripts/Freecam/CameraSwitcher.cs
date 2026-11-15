@@ -8,7 +8,6 @@ public class CameraSwitcher : MonoBehaviour
     [Header("Cameras")]
     public CinemachineCamera freeCam; // assign in inspector
 
-    private TrainingInstance currentTrainingInstance;
     public CinemachineCamera roverCam;
     private bool isFreeCamActive = true;
 
@@ -17,10 +16,9 @@ public class CameraSwitcher : MonoBehaviour
         // 1. If we haven't grabbed the rover camera yet, look for it in the scene
         if (roverCam == null)
         {
-            currentTrainingInstance = FindFirstObjectByType<TrainingInstance>();
-            if (currentTrainingInstance != null && currentTrainingInstance.roverCamera != null)
+            roverCam = FindRoverCamera();
+            if (roverCam != null)
             {
-                roverCam = currentTrainingInstance.roverCamera;
                 
                 // Set initial priorities: Rover cam standby (0), Freecam active (10)
                 roverCam.Priority = 0;
@@ -48,5 +46,16 @@ public class CameraSwitcher : MonoBehaviour
                 Debug.Log("Switched to Rover Camera");
             }
         }
+    }
+
+    // The first spawned rover's camera, from a training run or an evaluation run.
+    static CinemachineCamera FindRoverCamera()
+    {
+        var training = FindAnyObjectByType<TrainingInstance>();
+        if (training != null && training.roverCamera != null)
+            return training.roverCamera;
+
+        var evaluation = FindAnyObjectByType<Evaluation.EvaluationInstance>();
+        return evaluation != null ? evaluation.RoverCamera : null;
     }
 }

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Training
 {
-    public class TrainingOrganizer : MonoBehaviour
+    public class TrainingOrganizer : MonoBehaviour, ISimulationRun
     {
         [Header("Scene")]
         [SerializeField] private LoadMap loadMap;
@@ -18,17 +18,15 @@ namespace Training
         [SerializeField] private GameObject roverPrefab;
         [Tooltip("Optional. Lets the Play button start a run with the panel's current settings.")]
         [SerializeField] private SimulationManager simulationManager;
-        [Tooltip("Optional. Where the checkpoint folder and .onnx file name are read from.")]
-        [SerializeField] private ONNXFilePicker outputPicker;
         [Tooltip("Parent for the spawned instances. Defaults to this object.")]
         [SerializeField] private Transform instancesRoot;
 
         [Header("Training")]
         [Tooltip("Rovers trained side by side on the same tile, each in its own arena.")]
         [SerializeField, Min(1)] private int instanceCount = 1;
-        [SerializeField] private TrainingDefaults defaults = new TrainingDefaults();
         [SerializeField] private ArenaSettings arena = new ArenaSettings();
         [SerializeField] private EpisodeRules rules = new EpisodeRules();
+        [Tooltip("Window and optional time target. The success target comes from the Training panel.")]
         [SerializeField] private EarlyStoppingSettings earlyStopping = new EarlyStoppingSettings();
         [SerializeField] private bool logEpisodes = true;
 
@@ -44,6 +42,8 @@ namespace Training
         private string configPath;
         private int decisionPeriod = 1;
         private TrainingRequest request;
+        private EarlyStoppingSettings activeEarlyStopping;
+        private readonly List<string> trainedTiles = new List<string>();
         private TrainingStats stats;
         private Epoch epoch;
         private string behaviorName;
@@ -72,7 +72,24 @@ namespace Training
         public bool IsTraining => State == TrainingState.Running || State == TrainingState.Paused;
         public float SimulatedSeconds => IsTraining ? Time.time - runStartTime : 0f;
 
-        public bool StartTraining(SimulationSettings uiSettings)
+        // Read by EvaluationOrganizer so models are tested under the conditions they were trained in.
+        public GameObject RoverPrefab => roverPrefab;
+        public ArenaSettings Arena => arena;
+        public EpisodeRules Rules => rules;
+
+        public string ProgressDetail
+        {
+            get
+            {
+                if (!IsTraining || epoch == null || instances.Count == 0)
+                    return null;
+
+                EpisodeTimer episode = instances[0].Timer;
+                return $"Epoch {epoch.Timer.Remaining / 60f:0.0} min left  |  Episode {episode.Elapsed:0}/{episode.Limit:0} s";
+            }
+        }
+
+        public bool StartTraining(TrainingSettings uiSettings)
         {
             if (State != TrainingState.Idle)
             {
@@ -87,8 +104,7 @@ namespace Training
             }
 
             Debug.Log($"[Training] UI settings:\n{JsonUtility.ToJson(uiSettings, true)}", this);
-            request = TrainingRequestBuilder.Build(uiSettings, outputPicker, defaults, trainerConfig);
-            WarnAboutUnsupported(uiSettings);
+            request = TrainingRequestBuilder.Build(uiSettings, trainerConfig, new TileProvider(loadMap).MapName);
 
             string error;
             if (!Validate(out error))
@@ -107,6 +123,13 @@ namespace Training
             }
 
             stats = new TrainingStats(earlyStopping.Window);
+            activeEarlyStopping = new EarlyStoppingSettings
+            {
+                Window = earlyStopping.Window,
+                MinSuccessRate = request.SuccessTarget,
+                MaxAverageGoalSeconds = earlyStopping.MaxAverageGoalSeconds
+            };
+            trainedTiles.Clear();
             originalTimeScale = Time.timeScale;
             originalCaptureFramerate = Time.captureFramerate;
             originalRunInBackground = Application.runInBackground;
@@ -122,7 +145,7 @@ namespace Training
             if (State == TrainingState.Paused)
                 Resume();
             else if (State == TrainingState.Idle && simulationManager != null)
-                simulationManager.StartSimulation();
+                simulationManager.StartTraining();
         }
 
         public void Pause()
@@ -176,20 +199,6 @@ namespace Training
         public void SlowDown()
         {
             SetTimeScale(SpeedLimits.Slower(Speed));
-        }
-
-        public void SetEpochMinutes(string text)
-        {
-            float value;
-            if (TryParsePositive(text, out value))
-                defaults.EpochMinutes = value;
-        }
-
-        public void SetEpisodeSeconds(string text)
-        {
-            float value;
-            if (TryParsePositive(text, out value))
-                defaults.EpisodeSeconds = value;
         }
 
         private IEnumerator SetUpPythonAndLaunch()
@@ -272,6 +281,7 @@ namespace Training
             }
 
             request.StartTile = epoch.Tile.name;
+            RecordTile(epoch.Tile);
 
             if (!session.Connect())
             {
@@ -335,6 +345,7 @@ namespace Training
                 return;
             }
 
+            RecordTile(epoch.Tile);
             foreach (TrainingInstance instance in instances)
                 instance.RestartEpisode();
 
@@ -374,7 +385,7 @@ namespace Training
                 BeginStop($"The Python trainer exited unexpectedly with code {session.ExitCode}. Last output:\n{session.RecentOutput()}", true);
             else if (request.IterationUnit == IterationUnit.Episodes && stats.Episodes >= request.MaxIterations)
                 BeginStop($"Reached {request.MaxIterations} episodes.", false);
-            else if (request.EarlyStopping && EarlyStopping.ShouldStop(stats, earlyStopping, out reason))
+            else if (request.EarlyStopping && EarlyStopping.ShouldStop(stats, activeEarlyStopping, out reason))
                 BeginStop(reason, false);
         }
 
@@ -416,6 +427,7 @@ namespace Training
             {
                 string copy = ModelExporter.CopyTo(model, request.ModelOutputPath);
                 message += $" Model saved to {copy ?? model}";
+                SaveRunInfo(copy ?? model);
             }
             else if (stopWasConnected && !stopIsError)
             {
@@ -470,10 +482,26 @@ namespace Training
             return true;
         }
 
-        private void WarnAboutUnsupported(SimulationSettings uiSettings)
+        private void RecordTile(GameObject tile)
         {
-            if (uiSettings.pits || uiSettings.craters || uiSettings.items)
-                Debug.Log("[Training] Pits, craters and items are not generated yet; only rocks are placed.", this);
+            if (tile != null && !trainedTiles.Contains(tile.name))
+                trainedTiles.Add(tile.name);
+        }
+
+        // Lets evaluation's "Held-out Tiles" skip the tiles this model trained on.
+        private void SaveRunInfo(string modelPath)
+        {
+            var info = new TrainingRunInfo
+            {
+                Model = request.RunName,
+                RunId = request.RunId,
+                Map = request.MapName,
+                Tiles = new List<string>(trainedTiles),
+                FinishedAt = DateTime.Now.ToString("s", CultureInfo.InvariantCulture),
+                Seed = request.Seed
+            };
+
+            info.TrySave(modelPath);
         }
 
         private void CancelPythonSetup()

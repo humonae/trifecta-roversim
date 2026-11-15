@@ -6,6 +6,7 @@ namespace Training
     [Serializable]
     public class TrainingRequest
     {
+        public string MapName = "";
         public string StartTile = "";
         public bool NewTileEachEpoch;
         public bool RocksEnabled;
@@ -17,6 +18,8 @@ namespace Training
         public long MaxTrainerSteps;
         public string NetworkPreset = "";
         public bool EarlyStopping;
+        [Tooltip("Fraction of recent attempts that must reach the goal for early stopping.")]
+        public float SuccessTarget = 0.9f;
         public string ResultsDirectory = "";
         public string ModelOutputPath = "";
         public string RunName = "";

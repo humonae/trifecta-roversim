@@ -53,11 +53,14 @@ namespace Training
         private Texture2D background;
         private GUIStyle labelStyle;
         private GUIStyle clockStyle;
+        // Training or evaluation, whichever is active (see SimulationRuns).
+        private ISimulationRun run;
 
         private void Awake()
         {
             if (organizer == null)
                 organizer = FindAnyObjectByType<TrainingOrganizer>();
+            run = SimulationRuns.Resolve(organizer);
         }
 
         private void OnDestroy()
@@ -70,7 +73,7 @@ namespace Training
 
         private void Update()
         {
-            if (organizer == null)
+            if (run == null)
                 return;
 
             meter.Sample();
@@ -87,7 +90,7 @@ namespace Training
 
         private void OnGUI()
         {
-            if (organizer == null)
+            if (run == null)
                 return;
 
             EnsureResources();
@@ -135,16 +138,16 @@ namespace Training
             }
 
             // Draw Label
-            bool lagging = organizer.State == TrainingState.Running && meter.IsBehind(organizer.Speed);
+            bool lagging = run.State == TrainingState.Running && meter.IsBehind(run.Speed);
             labelStyle.normal.textColor = lagging ? laggingColor : Color.white;
-            string label = lagging ? $"{level}x ({meter.Actual:0.#}x)" : organizer.State == TrainingState.Paused ? $"{level}x ||" : $"{level}x";
+            string label = lagging ? $"{level}x ({meter.Actual:0.#}x)" : run.State == TrainingState.Paused ? $"{level}x ||" : $"{level}x";
             GUI.Label(new Rect(panel.x + Padding + arrowsWidth + 8f, y, labelWidth, currentArrowSize), label, labelStyle);
 
             // Draw Clock
             if (showClock)
             {
                 float clockY = y + currentArrowSize + RowGap;
-                GUI.Label(new Rect(panel.x + Padding, clockY, targetW - Padding * 2f, 16f), Clock(organizer.SimulatedSeconds), clockStyle);
+                GUI.Label(new Rect(panel.x + Padding, clockY, targetW - Padding * 2f, 16f), Clock(run.SimulatedSeconds), clockStyle);
             }
         }
 
@@ -204,12 +207,12 @@ namespace Training
 
         private int CurrentLevel()
         {
-            return Mathf.Clamp(Mathf.RoundToInt(organizer.Speed), 1, arrowCount);
+            return Mathf.Clamp(Mathf.RoundToInt(run.Speed), 1, arrowCount);
         }
 
         private void SetLevel(int level)
         {
-            organizer.SetTimeScale(Mathf.Clamp(level, 1, arrowCount));
+            run.SetTimeScale(Mathf.Clamp(level, 1, arrowCount));
         }
 
         private static string Clock(float seconds)

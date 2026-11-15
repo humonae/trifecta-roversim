@@ -5,8 +5,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Holds the training panel's settings.
-// TrainingRequestBuilder and TrainingOrganizer read these fields by name,
-// so keep the field names in sync with them.
+// Training.TrainingRequestBuilder turns these into the TrainingRequest the TrainingOrganizer runs,
+// so keep the field names in sync with it. `defaults` supplies everything the panel doesn't show
+// (iteration unit, obstacle slider scale, default results folder, seed).
 
 public class TrainingSettings : MonoBehaviour
 {
@@ -94,7 +95,7 @@ public class TrainingSettings : MonoBehaviour
 
     public void SetEarlyStopping(float a)    
     {   
-        NewTileEachEpoch = a != 0.0f;  
+        EarlyStopping = a != 0.0f;  
     }
  
     // For a 0 to 1 slider.
@@ -130,9 +131,21 @@ public class TrainingSettings : MonoBehaviour
  
     public void SetGoalPosition(Vector3 position) => GoalPos = position;
  
+    // The folder the checkpoints and the .onnx are saved to.
     public void SetModelOutputPath(string path) => ModelOutputPath = path;
  
-    // public void SetModelName(string name) => ModelName = name;
+    // The .onnx file name, with or without the extension.
+    public void SetModelName(string name) => ModelName = name;
+
+    // For a save-file dialog that returns the full path of the .onnx.
+    public void SetModelOutputFile(string fullPath)
+    {
+        if (string.IsNullOrWhiteSpace(fullPath))
+            return;
+
+        ModelOutputPath = System.IO.Path.GetDirectoryName(fullPath);
+        ModelName = System.IO.Path.GetFileNameWithoutExtension(fullPath);
+    }
 
     public void Refresh()
     {   

@@ -51,6 +51,20 @@ public class LoadMap : MonoBehaviour
 
     }
 
+    // Read by Training.TileProvider (evaluation's Test on choices, the training record).
+    public string CurrentMap => currentMap;
+    public IReadOnlyCollection<string> CurrentTileLabels => currentTiles.Keys;
+    public GameObject TileFor(string label) => label != null && currentTiles.TryGetValue(label, out var tile) ? tile : null;
+
+    // Shows one tile of the opened map by its grid label ("C6"). False if there's no such tile.
+    public bool LoadTile(string label)
+    {
+        if (label == null || !currentTiles.ContainsKey(label)) return false;
+        ShowOnly(label);
+        if (gridSelection != null) gridSelection.selectFromLabel(label);
+        return true;
+    }
+
     public void LoadSelectedTile()
     {
         string label = gridSelection.selectedTile;
