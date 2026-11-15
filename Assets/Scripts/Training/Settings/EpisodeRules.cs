@@ -20,5 +20,9 @@ namespace Training
         [Min(0f)] public float TimePenaltyPerSecond = 0.01f;
         [Tooltip("Cost per meter driven backwards. At the same value as Progress Reward Per Meter, reversing toward the goal earns nothing. 0 lets the rover reverse freely.")]
         [Min(0f)] public float ReversePenaltyPerMeter = 0.05f;
+        [Tooltip("Cost per second while a wheel or the suspension touches a rock.")]
+        [Min(0f)] public float WheelRockPenaltyPerSecond = 0.02f;
+        [Tooltip("Cost per second while the chassis touches a rock.")]
+        [Min(0f)] public float ChassisRockPenaltyPerSecond = 0.2f;
     }
 }

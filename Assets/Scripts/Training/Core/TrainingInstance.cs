@@ -10,6 +10,7 @@ namespace Training
         private EpisodeLayoutPicker layoutPicker;
         private EpisodeMonitor monitor;
         private EpisodeRewards rewards;
+        private RockContacts rockContacts;
         private readonly EpisodeTimer timer = new EpisodeTimer();
 
         private RoverAIController rover;
@@ -81,6 +82,7 @@ namespace Training
             roverRoot = roverObject.transform;
             chassis = rover.Chassis.transform;
             rover.EpisodeBeginning += HandleEpisodeBeginning;
+            AttachRockSensors();
 
             rover.enabled = false;
             holder.SetActive(true);
@@ -89,6 +91,13 @@ namespace Training
 
             error = null;
             return true;
+        }
+
+        private void AttachRockSensors()
+        {
+            rockContacts = new RockContacts(rover.Chassis);
+            foreach (ArticulationBody body in roverRoot.GetComponentsInChildren<ArticulationBody>(true))
+                body.gameObject.AddComponent<RockContactSensor>().Contacts = rockContacts;
         }
 
         private void HandleEpisodeBeginning(RoverAIController agent)
@@ -104,6 +113,7 @@ namespace Training
 
             timer.Restart(setup.Request.EpisodeSeconds);
             rewards.Begin(DistanceToGoal());
+            rockContacts.Clear();
             episodeRunning = true;
         }
 
@@ -124,7 +134,8 @@ namespace Training
 
             float deltaTime = Time.fixedDeltaTime;
             timer.Advance(deltaTime);
-            rover.AddReward(rewards.Step(DistanceToGoal(), ForwardSpeed(), deltaTime));
+            rover.AddReward(rewards.Step(DistanceToGoal(), ForwardSpeed(), rockContacts.WheelsTouching, rockContacts.ChassisTouching, deltaTime));
+            rockContacts.Clear();
 
             EpisodeOutcome outcome = monitor.Evaluate(chassis, layout.Goal, Arena, timer);
             if (outcome != EpisodeOutcome.Running)
