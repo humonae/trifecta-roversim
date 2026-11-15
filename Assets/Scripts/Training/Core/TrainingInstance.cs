@@ -1,6 +1,7 @@
 using System;
 using Rover;
 using UnityEngine;
+using Unity.Cinemachine;
 
 namespace Training
 {
@@ -15,6 +16,8 @@ namespace Training
 
         private RoverAIController rover;
         private Transform roverRoot;
+        
+        public CinemachineCamera roverCamera;
         private Transform chassis;
         private float groundClearance;
         private EpisodeLayout layout;
@@ -79,7 +82,11 @@ namespace Training
                 return false;
             }
 
+            //for the camera
+
+
             roverRoot = roverObject.transform;
+            roverCamera = roverObject.GetComponentInChildren<CinemachineCamera>(true);
             chassis = rover.Chassis.transform;
             rover.EpisodeBeginning += HandleEpisodeBeginning;
             AttachRockSensors();
