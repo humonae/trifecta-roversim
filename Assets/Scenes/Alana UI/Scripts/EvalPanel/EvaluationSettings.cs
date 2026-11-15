@@ -1,16 +1,17 @@
 using TMPro;
-//using Evaluation;
+using Evaluation;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Holds the training panel's settings.
-// TrainingRequestBuilder and TrainingOrganizer read these fields by name,
-// so keep the field names in sync with them.
+// Holds the evaluation panel's settings.
+// Evaluation.EvaluationRequestBuilder turns these into the EvaluationRequest the EvaluationOrganizer runs,
+// so keep the field names in sync with it. `defaults` supplies everything the panel doesn't show
+// (episodes per rock layout, rover count, inference options). Speed comes from the top-right speed control.
 
 public class EvaluationSettings : MonoBehaviour
 {  
-    //public EvaluationDefaults defaults;
+    public EvaluationDefaults defaults = new EvaluationDefaults();
     [Header("UI elements")]
     public TMP_Text ModelText;
     public Slider ObstacleDensitySlider; 
@@ -28,6 +29,7 @@ public class EvaluationSettings : MonoBehaviour
     public Vector3 GoalPos;
     public int StartingSeed;
     public string ModelName;
+    public EvaluationTiles TestOn = EvaluationTiles.SelectedTile;
     private int RunID; //?
 
     // not sure how to handle runspeed, so it's just there
@@ -44,6 +46,33 @@ public class EvaluationSettings : MonoBehaviour
         if (int.TryParse(text, out int n))
             EpisodeCount = n;
     } 
+    // Path of the .onnx/.sentis to evaluate. ONNXFilePicker calls this when a model is picked.
+    public void SetSelectedModel(string path)
+    {
+        SelectedModel = path;
+        ModelName = string.IsNullOrEmpty(path) ? "" : System.IO.Path.GetFileNameWithoutExtension(path);
+        if (ModelText != null)
+            ModelText.text = string.IsNullOrEmpty(ModelName) ? "None" : ModelName;
+    }
+
+    // For the Test on buttons (ButtonGroupSelector): 0 = Selected Tile, 1 = Held-out Tiles, 2 = All tiles.
+    public void SetTestOn(int index)
+    {
+        if (System.Enum.IsDefined(typeof(EvaluationTiles), index))
+            TestOn = (EvaluationTiles)index;
+    }
+
+    // For the Start and Goal buttons: 0 = Random, 1 = Set on Preview.
+    // With Set on Preview, call SetStartPosition / SetGoalPosition with the picked points.
+    public void SetStartGoalMode(int index) => RandomPosition = index == 0;
+
+    // For typing a seed instead of rerolling.
+    public void SetSeed(string text)
+    {
+        if (int.TryParse(text, out int seed))
+            StartingSeed = seed;
+    }
+
     public void SetSeed()
     {
         //random
@@ -73,7 +102,7 @@ public class EvaluationSettings : MonoBehaviour
     {
         //ideally replace with the default values set in evaluationDefaults rather than reassigning them to their current values
         SetRocks();
-        ModelText.text = "None";
+        ModelText.text = string.IsNullOrEmpty(ModelName) ? "None" : ModelName;
         ObstacleDensitySlider.SetValueWithoutNotify(ObstacleDensity);
         NumberEpisodes.SetTextWithoutNotify(EpisodeCount.ToString());
         SetSeed();
