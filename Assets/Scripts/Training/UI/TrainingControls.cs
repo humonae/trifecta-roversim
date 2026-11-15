@@ -4,52 +4,58 @@ using UnityEngine.UI;
 
 namespace Training
 {
+    // Play / pause / stop for whichever run is active: training, or evaluation when the scene has an
+    // EvaluationOrganizer (see SimulationRuns).
     public class TrainingControls : MonoBehaviour
     {
         [SerializeField] private TrainingOrganizer organizer;
         [SerializeField] private Button playButton;
         [SerializeField] private Button pauseButton;
         [SerializeField] private Button stopButton;
-        [Tooltip("Buttons that start a run, such as Run Training. They are disabled while a run is active.")]
+        [Tooltip("Buttons that start a run, such as Run Training and Run Evaluation. They are disabled while a run is active.")]
         [SerializeField] private Button[] startButtons = new Button[0];
+
+        private ISimulationRun run;
 
         private void Awake()
         {
             if (organizer == null)
                 organizer = FindAnyObjectByType<TrainingOrganizer>();
+            run = SimulationRuns.Resolve(organizer);
         }
 
         private void OnEnable()
         {
-            if (organizer == null)
+            if (run == null)
             {
                 Debug.LogWarning($"[TrainingControls] No {nameof(TrainingOrganizer)} found.", this);
                 return;
             }
 
-            AddListener(playButton, organizer.Play);
-            AddListener(pauseButton, organizer.Pause);
-            AddListener(stopButton, organizer.Stop);
-            organizer.StateChanged += Refresh;
-            Refresh(organizer.State);
+            AddListener(playButton, run.Play);
+            AddListener(pauseButton, run.Pause);
+            AddListener(stopButton, run.Stop);
+            run.StateChanged += Refresh;
+            Refresh(run.State);
         }
 
         private void OnDisable()
         {
-            if (organizer == null)
+            if (run == null)
                 return;
 
-            RemoveListener(playButton, organizer.Play);
-            RemoveListener(pauseButton, organizer.Pause);
-            RemoveListener(stopButton, organizer.Stop);
-            organizer.StateChanged -= Refresh;
+            RemoveListener(playButton, run.Play);
+            RemoveListener(pauseButton, run.Pause);
+            RemoveListener(stopButton, run.Stop);
+            run.StateChanged -= Refresh;
         }
 
-        private void Refresh(TrainingState state)
+        private void Refresh(TrainingState ignored)
         {
+            TrainingState state = run.State;
             bool idle = state == TrainingState.Idle;
 
-            SetInteractable(playButton, state == TrainingState.Paused || (idle && organizer.CanStartFromPlay));
+            SetInteractable(playButton, state == TrainingState.Paused || (idle && run.CanStartFromPlay));
             SetInteractable(pauseButton, state == TrainingState.Running);
             SetInteractable(stopButton, !idle && state != TrainingState.Stopping);
 

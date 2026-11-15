@@ -4,51 +4,46 @@ using UnityEngine;
 
 namespace Training
 {
+    // Turns the Training panel's values (TrainingSettings) into the request the organizer runs.
+    // TrainingSettings.defaults supplies the values the panel doesn't show.
     public static class TrainingRequestBuilder
     {
         private const string DefaultModelName = "trained_model";
 
-        public static TrainingRequest Build(SimulationSettings ui, ONNXFilePicker outputPicker, TrainingDefaults defaults, TrainerConfig trainerConfig)
+        public static TrainingRequest Build(TrainingSettings ui, TrainerConfig trainerConfig, string mapName)
         {
-            int iterations = ui.maxIterations > 0 ? ui.maxIterations : defaults.DefaultIterations;
-            string resultsDirectory = FirstExistingFolder(ReadPicker(outputPicker, p => p.GetOutputPath()), ui.checkpointOutputFolder)
-                                      ?? defaults.DefaultResultsDirectory;
-            string modelName = FirstValidName(ReadPicker(outputPicker, p => p.GetFileName()), ui.onnxFileName) ?? DefaultModelName;
-            string modelFolder = FirstExistingFolder(ui.onnxOutputFolder) ?? resultsDirectory;
+            TrainingDefaults defaults = ui.defaults ?? new TrainingDefaults();
+
+            int iterations = ui.Iterations > 0 ? ui.Iterations : defaults.DefaultIterations;
+            string resultsDirectory = FirstExistingFolder(ui.ModelOutputPath) ?? defaults.DefaultResultsDirectory;
+            string modelName = FirstValidName(ui.ModelName) ?? DefaultModelName;
 
             return new TrainingRequest
             {
-                NewTileEachEpoch = defaults.NewTileEachEpoch,
-                RocksEnabled = ui.rocks,
-                RockDensity = Mathf.Clamp01(ui.obstacleDensity / defaults.ObstacleSliderMax) * defaults.MaxRockDensity,
-                EpochSeconds = defaults.EpochMinutes * 60f,
-                EpisodeSeconds = defaults.EpisodeSeconds,
+                MapName = mapName ?? "",
+                NewTileEachEpoch = ui.NewTileEachEpoch,
+                RocksEnabled = ui.RocksOn,
+                RockDensity = RockDensity(ui.ObstacleDensity, defaults),
+                EpochSeconds = Mathf.Max(0.1f, ui.EpochMinutes) * 60f,
+                EpisodeSeconds = Mathf.Max(1f, ui.EpisodeSeconds),
                 IterationUnit = defaults.IterationUnit,
                 MaxIterations = iterations,
-                NetworkPreset = trainerConfig.PresetAt(ui.networkArchitecture).Name,
-                EarlyStopping = ui.earlyStopping,
+                NetworkPreset = trainerConfig.PresetNamed(ui.NetworkArchitecture).Name,
+                EarlyStopping = ui.EarlyStopping,
+                SuccessTarget = Mathf.Clamp01(ui.SuccessTarget),
                 ResultsDirectory = resultsDirectory,
-                ModelOutputPath = Path.Combine(modelFolder, modelName + ".onnx"),
+                ModelOutputPath = Path.Combine(resultsDirectory, modelName + ".onnx"),
                 RunName = modelName,
                 RunId = PythonPaths.MakeRunId(modelName),
-                UseFixedSeed = defaults.UseFixedSeed,
+                UseFixedSeed = ui.FixedSeed,
                 Seed = defaults.Seed
             };
         }
 
-        private static string ReadPicker(ONNXFilePicker picker, Func<ONNXFilePicker, string> read)
+        // The obstacle slider goes from 0 to ObstacleSliderMax; its maximum means MaxRockDensity rocks/m².
+        public static float RockDensity(float sliderValue, TrainingDefaults defaults)
         {
-            if (picker == null)
-                return null;
-
-            try
-            {
-                return read(picker);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return Mathf.Clamp01(sliderValue / Mathf.Max(1f, defaults.ObstacleSliderMax)) * defaults.MaxRockDensity;
         }
 
         private static string FirstExistingFolder(params string[] candidates)

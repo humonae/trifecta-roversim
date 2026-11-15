@@ -12,6 +12,10 @@ GameObject:
   - component: {fileID: 7336855243682529266}
   - component: {fileID: 6455376546211775665}
   - component: {fileID: 2348932033155430899}
+  - component: {fileID: 8569853931921863109}
+  - component: {fileID: 2079244744573332312}
+  - component: {fileID: 3597745950382115996}
+  - component: {fileID: 8852902051171071216}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -97,20 +101,8 @@ MonoBehaviour:
   rockPlacer: {fileID: 7336855243682529266}
   roverPrefab: {fileID: 5444675609017222369, guid: 3347b20c9cc41464d9b326dd88ec7e30, type: 3}
   simulationManager: {fileID: 0}
-  outputPicker: {fileID: 0}
   instancesRoot: {fileID: 0}
   instanceCount: 1
-  defaults:
-    EpochMinutes: 10
-    EpisodeSeconds: 60
-    NewTileEachEpoch: 1
-    IterationUnit: 1
-    DefaultIterations: 1000
-    ObstacleSliderMax: 10
-    MaxRockDensity: 0.1
-    DefaultResultsDirectory: results
-    UseFixedSeed: 0
-    Seed: 0
   arena:
     Size: 100
     EdgeMargin: 5
@@ -129,6 +121,9 @@ MonoBehaviour:
     TimeoutReward: 0
     ProgressRewardPerMeter: 0.05
     TimePenaltyPerSecond: 0.01
+    ReversePenaltyPerMeter: 0.05
+    WheelRockPenaltyPerSecond: 0.02
+    ChassisRockPenaltyPerSecond: 0.2
   earlyStopping:
     Window: 100
     MinSuccessRate: 0.9
@@ -147,7 +142,7 @@ MonoBehaviour:
     MaxTorchVersion: 2.8.99
     WindowsTorchIndexUrl: https://download.pytorch.org/whl/cu121
   trainer:
-    TimeScale: 2
+    TimeScale: 1
     StartupTimeout: 180
     ShutdownTimeout: 60
     ConnectionTimeout: 604800
@@ -197,3 +192,119 @@ MonoBehaviour:
   stopButton: {fileID: 0}
   startButtons:
   - {fileID: 0}
+--- !u!114 &8569853931921863109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 374a1ac15f3696a40a18c9fa63ee4205, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EvaluationOrganizer
+  loadMap: {fileID: 0}
+  rockPlacer: {fileID: 0}
+  roverPrefab: {fileID: 0}
+  simulationManager: {fileID: 0}
+  instancesRoot: {fileID: 0}
+  trainingOrganizer: {fileID: 0}
+  trainingSettings: {fileID: 0}
+  matchTraining: 1
+  arena:
+    Size: 100
+    EdgeMargin: 5
+    MinGoalDistance: 10
+    MaxGoalDistance: 40
+    MaxSlope: 20
+    SpawnGap: 0.1
+    SpawnClearRadius: 2.5
+    GoalClearRadius: 1.5
+    PlacementAttempts: 50
+  rules:
+    GoalRadius: 1.5
+    MaxTiltAngle: 70
+    GoalReward: 1
+    FailurePenalty: -1
+    TimeoutReward: 0
+    ProgressRewardPerMeter: 0.05
+    TimePenaltyPerSecond: 0.01
+    ReversePenaltyPerMeter: 0.05
+    WheelRockPenaltyPerSecond: 0.02
+    ChassisRockPenaltyPerSecond: 0.2
+  fallbackModel: {fileID: 0}
+  logEpisodes: 1
+--- !u!114 &2079244744573332312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3967ed57542ab904ab4c47fd609014c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraSwitcher
+  freeCam: {fileID: 0}
+  roverCam: {fileID: 0}
+--- !u!114 &3597745950382115996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 374a1ac15f3696a40a18c9fa63ee4205, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EvaluationOrganizer
+  loadMap: {fileID: 0}
+  rockPlacer: {fileID: 0}
+  roverPrefab: {fileID: 0}
+  simulationManager: {fileID: 0}
+  instancesRoot: {fileID: 0}
+  trainingOrganizer: {fileID: 0}
+  trainingSettings: {fileID: 0}
+  matchTraining: 1
+  arena:
+    Size: 100
+    EdgeMargin: 5
+    MinGoalDistance: 10
+    MaxGoalDistance: 40
+    MaxSlope: 20
+    SpawnGap: 0.1
+    SpawnClearRadius: 2.5
+    GoalClearRadius: 1.5
+    PlacementAttempts: 50
+  rules:
+    GoalRadius: 1.5
+    MaxTiltAngle: 70
+    GoalReward: 1
+    FailurePenalty: -1
+    TimeoutReward: 0
+    ProgressRewardPerMeter: 0.05
+    TimePenaltyPerSecond: 0.01
+    ReversePenaltyPerMeter: 0.05
+    WheelRockPenaltyPerSecond: 0.02
+    ChassisRockPenaltyPerSecond: 0.2
+  fallbackModel: {fileID: 0}
+  logEpisodes: 1
+--- !u!114 &8852902051171071216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605497031338955241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49ce1c469835ff4448b81f2ed8fcfe67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EvaluationReportPanel
+  organizer: {fileID: 0}
+  reportText: {fileID: 0}
+  panel: {fileID: 0}
+  windowWidth: 520

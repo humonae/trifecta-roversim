@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Rocks;
 using UnityEngine;
@@ -20,6 +21,18 @@ namespace Training
             this.rng = rng;
         }
 
+        // A spot rocks must not cover, such as a start or goal the user picked.
+        public struct ClearSpot
+        {
+            public Vector3 Position;
+            public float Radius;
+        }
+
+        // Evaluation with a picked start and goal: every rover uses this arena instead of randomly
+        // planned ones, and rocks are kept off KeepClear. Training leaves both empty.
+        public Rect? FixedArena;
+        public readonly List<ClearSpot> KeepClear = new List<ClearSpot>();
+
         public GameObject Tile { get; private set; }
         public TerrainSurface Surface { get; private set; }
         public List<Rect> Arenas { get; private set; } = new List<Rect>();
@@ -28,8 +41,14 @@ namespace Training
 
         public bool Begin(TrainingRequest request, int arenaCount, bool newTile, out string error)
         {
+            return Begin(request, arenaCount, newTile ? (Func<GameObject>)tiles.NextRandomTile : tiles.CurrentTile, out error);
+        }
+
+        // chooseTile loads and returns the tile to use, such as a specific tile for evaluation.
+        public bool Begin(TrainingRequest request, int arenaCount, Func<GameObject> chooseTile, out string error)
+        {
             GameObject previous = Tile;
-            GameObject tile = newTile ? tiles.NextRandomTile() : tiles.CurrentTile();
+            GameObject tile = chooseTile();
             if (tile == null)
             {
                 error = "No map tile is loaded. Pick a map (or load a tile from the map grid) before training.";
@@ -46,8 +65,10 @@ namespace Training
                 return false;
             }
 
-            List<Rect> arenas = ArenaPlanner.Plan(surface.BoundsXZ, arenaSettings.Size, arenaCount, rng);
-            if (arenas.Count < arenaCount)
+            List<Rect> arenas = FixedArena.HasValue
+                ? new List<Rect> { FixedArena.Value }
+                : ArenaPlanner.Plan(surface.BoundsXZ, arenaSettings.Size, arenaCount, rng);
+            if (!FixedArena.HasValue && arenas.Count < arenaCount)
                 Debug.LogWarning($"[Training] '{tile.name}' only fits {arenas.Count} arena(s) of {arenaSettings.Size} m; {arenaCount - arenas.Count} rover(s) will share.");
 
             Tile = tile;
@@ -98,6 +119,8 @@ namespace Training
                 AreaXZ = ArenaPlanner.Bounds(Arenas),
                 Seed = rng.Next()
             };
+            foreach (ClearSpot spot in KeepClear)
+                options.KeepClear(spot.Position, spot.Radius);
 
             rockPlacer.PlaceRocks(request.RockDensity, Tile, options);
             Physics.SyncTransforms();

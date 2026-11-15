@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 4119066198541920130}
   - component: {fileID: 9101741862354548425}
   - component: {fileID: 6469686095534180725}
+  - component: {fileID: 1841537969352967446}
+  - component: {fileID: 6630542908745562670}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -84,7 +86,10 @@ MonoBehaviour:
     roverStartPosition: {x: 0, y: 0, z: 0}
     position: {fileID: 0}
   statusLabel: {fileID: 0}
+  trainingSettings: {fileID: 0}
+  evaluationSettings: {fileID: 0}
   trainingOrganizer: {fileID: 0}
+  evaluationOrganizer: {fileID: 0}
 --- !u!114 &9101741862354548425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -138,3 +143,91 @@ MonoBehaviour:
   TestTerrain: []
   TestTerrain2: []
   gridSelection: {fileID: 0}
+--- !u!114 &1841537969352967446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6823775150430522652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 657aab3c5acdd694e9f5e40557341c63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainingSettings
+  defaults:
+    EpochMinutes: 10
+    EpisodeSeconds: 60
+    NewTileEachEpoch: 1
+    IterationUnit: 1
+    DefaultIterations: 1000
+    ObstacleSliderMax: 10
+    MaxRockDensity: 0.1
+    DefaultResultsDirectory: results
+    UseFixedSeed: 0
+    Seed: 0
+  NADropdown: {fileID: 0}
+  IterInput: {fileID: 0}
+  EarlyStopSlider: {fileID: 0}
+  SuccessSlider: {fileID: 0}
+  FixedSeedToggle: {fileID: 0}
+  EpochToggle: {fileID: 0}
+  ObstacleDensitySlider: {fileID: 0}
+  Folder: {fileID: 0}
+  OutputFileText: {fileID: 0}
+  NetworkArchitecture: 
+  Iterations: 0
+  EarlyStopping: 1
+  SuccessTarget: 0.9
+  FixedSeed: 1
+  NewTileEachEpoch: 1
+  EpochMinutes: 10
+  EpisodeSeconds: 60
+  ObstacleDensity: 0
+  RocksOn: 0
+  RandomPosition: 0
+  StartPos: {x: 0, y: 0, z: 0}
+  GoalPos: {x: 0, y: 0, z: 0}
+  ModelOutputPath: 
+  ModelName: 
+--- !u!114 &6630542908745562670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6823775150430522652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70986bbb70ac4dc48b34abadb9148912, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EvaluationSettings
+  defaults:
+    DefaultEpisodes: 1000
+    EpisodesPerLayout: 10
+    RoverCount: 1
+    EpisodeSeconds: 60
+    RunSpeeds:
+    - 1
+    - 4
+    - 8
+    DeterministicInference: 1
+    InferenceDevice: 0
+    ObstacleSliderMax: 10
+    MaxRockDensity: 0.1
+    ReportFolder: 
+  ModelText: {fileID: 0}
+  ObstacleDensitySlider: {fileID: 0}
+  NumberEpisodes: {fileID: 0}
+  StartingSeedText: {fileID: 0}
+  SelectedModel: 
+  EpisodeCount: 5000
+  RandomPosition: 1
+  ObstacleDensity: 5
+  RocksOn: 0
+  StartPos: {x: 0, y: 0, z: 0}
+  GoalPos: {x: 0, y: 0, z: 0}
+  StartingSeed: 0
+  ModelName: 
+  TestOn: 0
+  RunSpeed: 1

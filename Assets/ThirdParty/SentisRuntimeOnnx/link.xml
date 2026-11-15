@@ -1,0 +1,5 @@
+<linker>
+    <!-- The ONNX protobuf classes are built through reflection descriptors; keep IL2CPP from stripping them. -->
+    <assembly fullname="Google.Protobuf_Packed" preserve="all"/>
+    <assembly fullname="Unity.InferenceEngine.ONNX" preserve="all"/>
+</linker>

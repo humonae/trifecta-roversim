@@ -23,12 +23,33 @@ public class ONNXFilePicker : MonoBehaviour
 
         if (outputPathLabel[mode] != null)
             outputPathLabel[mode].text = onnxOutputFolder;
+
+        var training = FindAnyObjectByType<TrainingSettings>();
+        if (training != null)
+            training.SetModelOutputPath(onnxOutputFolder);
+    }
+
+    // For the training panel's ".onnx Output File" Browse: a save dialog for the trained model's name and folder.
+    public void OpenONNXSaveLocation()
+    {
+        string path = StandaloneFileBrowser.SaveFilePanel("Save the trained model as", "", "trained_model", "onnx");
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        if (outputPathFileName.Length > mode && outputPathFileName[mode] != null)
+            outputPathFileName[mode].text = Path.GetFileName(path);
+        if (outputPathLabel.Length > mode && outputPathLabel[mode] != null)
+            outputPathLabel[mode].text = Path.GetDirectoryName(path);
+
+        var training = FindAnyObjectByType<TrainingSettings>();
+        if (training != null)
+            training.SetModelOutputFile(path);
     }
 
     public void OpenONNXFilePicker() //selecting a preexisting onnx file for training/evaluation
     {
         // provide a list of acceptable extensions
-        var extensions = new[] { new ExtensionFilter("ONNX Model", "onnx") };
+        var extensions = new[] { new ExtensionFilter("Trained Model", "onnx", "sentis") };
         var paths = StandaloneFileBrowser.OpenFilePanel("Select an ONNX Model", "", extensions, false);
 
         if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
@@ -50,8 +71,12 @@ public class ONNXFilePicker : MonoBehaviour
 
     void OnModelSelected(string path)
     {
-        //Not sure where to load it yet 
-        // but the model must be loaded from its file into the sim
+        // The Evaluation panel's model. EvaluationOrganizer imports it when the run starts.
+        var evaluation = FindAnyObjectByType<EvaluationSettings>();
+        if (evaluation != null)
+            evaluation.SetSelectedModel(path);
+        else
+            Debug.LogWarning("No EvaluationSettings found; the picked model won't be used.");
     }
 
     public string GetOutputPath()

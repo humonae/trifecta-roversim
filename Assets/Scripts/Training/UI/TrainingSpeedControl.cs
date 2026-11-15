@@ -17,17 +17,19 @@ namespace Training
         [SerializeField] private Button slowerButton;
         [SerializeField] private string labelFormat = "Speed {0}x";
 
+        private ISimulationRun run;
         private bool updating;
 
         private void Awake()
         {
             if (organizer == null)
                 organizer = FindAnyObjectByType<TrainingOrganizer>();
+            run = SimulationRuns.Resolve(organizer);
         }
 
         private void OnEnable()
         {
-            if (organizer == null)
+            if (run == null)
             {
                 Debug.LogWarning($"[TrainingSpeedControl] No {nameof(TrainingOrganizer)} found.", this);
                 return;
@@ -36,37 +38,37 @@ namespace Training
             if (slider != null)
                 slider.onValueChanged.AddListener(OnSliderChanged);
             if (input != null)
-                input.onEndEdit.AddListener(organizer.SetTimeScale);
+                input.onEndEdit.AddListener(run.SetTimeScale);
             if (fasterButton != null)
-                fasterButton.onClick.AddListener(organizer.SpeedUp);
+                fasterButton.onClick.AddListener(run.SpeedUp);
             if (slowerButton != null)
-                slowerButton.onClick.AddListener(organizer.SlowDown);
+                slowerButton.onClick.AddListener(run.SlowDown);
 
-            organizer.SpeedChanged += Show;
-            Show(organizer.Speed);
+            run.SpeedChanged += Show;
+            Show(run.Speed);
         }
 
         private void OnDisable()
         {
-            if (organizer == null)
+            if (run == null)
                 return;
 
             if (slider != null)
                 slider.onValueChanged.RemoveListener(OnSliderChanged);
             if (input != null)
-                input.onEndEdit.RemoveListener(organizer.SetTimeScale);
+                input.onEndEdit.RemoveListener(run.SetTimeScale);
             if (fasterButton != null)
-                fasterButton.onClick.RemoveListener(organizer.SpeedUp);
+                fasterButton.onClick.RemoveListener(run.SpeedUp);
             if (slowerButton != null)
-                slowerButton.onClick.RemoveListener(organizer.SlowDown);
+                slowerButton.onClick.RemoveListener(run.SlowDown);
 
-            organizer.SpeedChanged -= Show;
+            run.SpeedChanged -= Show;
         }
 
         private void OnSliderChanged(float value)
         {
             if (!updating)
-                organizer.SetTimeScale(value);
+                run.SetTimeScale(value);
         }
 
         private void Show(float speed)

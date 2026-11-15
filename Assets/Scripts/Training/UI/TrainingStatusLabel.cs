@@ -14,19 +14,21 @@ namespace Training
         [SerializeField] private bool showSpeed = true;
 
         private readonly SpeedMeter meter = new SpeedMeter(RefreshInterval);
+        private ISimulationRun run;
         private float nextRefresh;
 
         private void Awake()
         {
             if (organizer == null)
                 organizer = FindAnyObjectByType<TrainingOrganizer>();
+            run = SimulationRuns.Resolve(organizer);
             if (label == null)
                 label = GetComponent<TMP_Text>();
         }
 
         private void Update()
         {
-            if (organizer == null || label == null || Time.unscaledTime < nextRefresh)
+            if (run == null || label == null || Time.unscaledTime < nextRefresh)
                 return;
 
             meter.Sample();
@@ -36,23 +38,19 @@ namespace Training
 
         private string Describe()
         {
-            bool live = organizer.State == TrainingState.Running || organizer.State == TrainingState.Paused;
-            if (!live || organizer.CurrentEpoch == null || organizer.Instances.Count == 0)
-                return organizer.Status;
+            bool live = run.State == TrainingState.Running || run.State == TrainingState.Paused;
+            string text = run.Status;
+            if (!live)
+                return text;
 
-            string text = organizer.Status;
+            string detail = run.ProgressDetail;
+            if (showTimers && !string.IsNullOrEmpty(detail))
+                text += "\n" + detail;
 
-            if (showTimers)
+            if (showSpeed && run.State == TrainingState.Running)
             {
-                EpisodeTimer epoch = organizer.CurrentEpoch.Timer;
-                EpisodeTimer episode = organizer.Instances[0].Timer;
-                text += $"\nEpoch {epoch.Remaining / 60f:0.0} min left  |  Episode {episode.Elapsed:0}/{episode.Limit:0} s";
-            }
-
-            if (showSpeed && organizer.State == TrainingState.Running)
-            {
-                text += $"\nSpeed {Format(organizer.Speed)}x";
-                if (meter.IsBehind(organizer.Speed))
+                text += $"\nSpeed {Format(run.Speed)}x";
+                if (meter.IsBehind(run.Speed))
                     text += $" (running at {Format(meter.Actual)}x, the computer can't keep up)";
             }
 

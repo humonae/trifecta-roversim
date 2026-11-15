@@ -37,6 +37,7 @@ namespace Training
         [SerializeField, Range(0f, 1f)] private float backgroundOpacity = 0.8f;
 
         private readonly SpeedMeter meter = new SpeedMeter(0.5f);
+        private ISimulationRun run;
         private readonly Vector3[] corners = new Vector3[4];
         private Texture2D arrow;
         private Texture2D background;
@@ -47,6 +48,7 @@ namespace Training
         {
             if (organizer == null)
                 organizer = FindAnyObjectByType<TrainingOrganizer>();
+            run = SimulationRuns.Resolve(organizer);
         }
 
         private void OnDestroy()
@@ -59,7 +61,7 @@ namespace Training
 
         private void Update()
         {
-            if (organizer == null)
+            if (run == null)
                 return;
 
             meter.Sample();
@@ -76,7 +78,7 @@ namespace Training
 
         private void OnGUI()
         {
-            if (organizer == null)
+            if (run == null)
                 return;
 
             EnsureResources();
@@ -104,23 +106,23 @@ namespace Training
                     SetLevel(i);
             }
 
-            bool lagging = organizer.State == TrainingState.Running && meter.IsBehind(organizer.Speed);
+            bool lagging = run.State == TrainingState.Running && meter.IsBehind(run.Speed);
             labelStyle.normal.textColor = lagging ? laggingColor : Color.white;
-            string label = lagging ? $"{level}x ({meter.Actual:0.#}x)" : organizer.State == TrainingState.Paused ? $"{level}x ||" : $"{level}x";
+            string label = lagging ? $"{level}x ({meter.Actual:0.#}x)" : run.State == TrainingState.Paused ? $"{level}x ||" : $"{level}x";
             GUI.Label(new Rect(panel.x + Padding + arrowsWidth + 8f, y, labelWidth, arrowSize), label, labelStyle);
 
             if (showClock)
-                GUI.Label(new Rect(panel.x + Padding, y + arrowSize + RowGap, width - Padding * 2f, 16f), Clock(organizer.SimulatedSeconds), clockStyle);
+                GUI.Label(new Rect(panel.x + Padding, y + arrowSize + RowGap, width - Padding * 2f, 16f), Clock(run.SimulatedSeconds), clockStyle);
         }
 
         private int CurrentLevel()
         {
-            return Mathf.Clamp(Mathf.RoundToInt(organizer.Speed), 1, arrowCount);
+            return Mathf.Clamp(Mathf.RoundToInt(run.Speed), 1, arrowCount);
         }
 
         private void SetLevel(int level)
         {
-            organizer.SetTimeScale(Mathf.Clamp(level, 1, arrowCount));
+            run.SetTimeScale(Mathf.Clamp(level, 1, arrowCount));
         }
 
         private float Top()

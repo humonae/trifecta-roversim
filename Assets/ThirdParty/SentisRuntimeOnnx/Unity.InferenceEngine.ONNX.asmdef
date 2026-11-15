@@ -1,0 +1,21 @@
+{
+    "name": "Unity.InferenceEngine.ONNX",
+    "rootNamespace": "",
+    "references": [
+        "Unity.InferenceEngine",
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.Burst"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Google.Protobuf_Packed.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
