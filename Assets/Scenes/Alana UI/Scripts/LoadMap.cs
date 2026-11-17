@@ -23,6 +23,8 @@ public class LoadMap : MonoBehaviour
             { "TestTerrain2", TestTerrain2 }
         };
         HideAll();
+
+        OpenMap("Jezero");
     }
     public void OpenMap(string mapName)
     {
