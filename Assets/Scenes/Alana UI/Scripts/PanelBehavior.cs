@@ -7,6 +7,10 @@ public class PanelBehavior : MonoBehaviour
     //public State simMode;
     public GameObject Panel1;
     public GameObject Panel2;
+
+    public GameObject Button1;
+    public GameObject Button2;
+
     public GameObject panel;
     public void TogglePanel1()
     {
@@ -20,6 +24,20 @@ public class PanelBehavior : MonoBehaviour
         Panel1.SetActive(false);
     }
 
+
+    public void ToggleButton1()
+    {
+        Button1.SetActive(true);
+        Button2.SetActive(false);
+    }
+
+    public void ToggleButton2()
+    {
+        Button2.SetActive(true);
+        Button1.SetActive(false);
+    }
+
+
     // closing and opening 1 panel
     
     public void ShowPanel(GameObject panel)
@@ -30,6 +48,7 @@ public class PanelBehavior : MonoBehaviour
     {
         panel.SetActive(false);
     }
+
 
     // public void setMode(int mode) // 0 or 1
     // {
