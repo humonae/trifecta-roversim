@@ -3311,6 +3311,7 @@ GameObject:
   - component: {fileID: 166244916}
   - component: {fileID: 166244915}
   - component: {fileID: 166244914}
+  - component: {fileID: 166244917}
   m_Layer: 5
   m_Name: EvaluationResults
   m_TagString: Untagged
@@ -3396,7 +3397,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 8
+  m_PixelsPerUnitMultiplier: 12
 --- !u!222 &166244916
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3405,6 +3406,35 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 166244912}
   m_CullTransparentMesh: 1
+--- !u!114 &166244917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 166244912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f299f373dec8e494b89155f1fc6c652d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EvaluationMonitorView
+  organizer: {fileID: 1544306481}
+  runText: {fileID: 1392918239}
+  detailsText: {fileID: 1410889110}
+  successText: {fileID: 1928164447}
+  successDetailText: {fileID: 2034303081}
+  collisionsText: {fileID: 37829856}
+  collisionsDetailText: {fileID: 1150743983}
+  timeoutsText: {fileID: 1079035939}
+  timeoutsDetailText: {fileID: 657915452}
+  timeToGoalText: {fileID: 1025200992}
+  hitRockCountText: {fileID: 0}
+  timedOutCountText: {fileID: 0}
+  changeLabelText: {fileID: 1233083670}
+  changeText: {fileID: 902742796}
+  tracker: {fileID: 1703517309}
+  trackerLabel: {fileID: 0}
+  trackerLabelDefault: Episode Tracker
 --- !u!1 &168408854
 GameObject:
   m_ObjectHideFlags: 0
@@ -26441,7 +26471,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 625.3649}
+  m_SizeDelta: {x: 0, y: 638}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1358491569
 MonoBehaviour:
@@ -27158,13 +27188,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 10
+  m_fontSizeBase: 10
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 16
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -27474,8 +27504,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 10
+  m_fontSizeBase: 10
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -30473,6 +30503,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ffeb4598c064511908600eb32003ac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Training.TrainingOrganizer
+--- !u!114 &1544306481 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8569853931921863109, guid: c9acc0e92e6634546af1946734224f4d, type: 3}
+  m_PrefabInstance: {fileID: 7310095804125666046}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 374a1ac15f3696a40a18c9fa63ee4205, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EvaluationOrganizer
 --- !u!1 &1546184774
 GameObject:
   m_ObjectHideFlags: 0
@@ -34491,6 +34532,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1703517308}
+  - component: {fileID: 1703517309}
+  - component: {fileID: 1703517310}
   m_Layer: 5
   m_Name: Bin
   m_TagString: Untagged
@@ -34517,6 +34560,43 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 460, y: 56}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1703517309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703517307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14a6afbe49da068489c0ac2e25dffd61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EpisodeTrackingBar
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  maxColumns: 50
+  gap: 3
+  cornerRadius: 3
+  cornerSegments: 6
+  successColor: {r: 0.59607846, g: 0.9803922, b: 0.59607846, a: 1}
+  timedOutColor: {r: 1, g: 0.27058825, b: 0, a: 1}
+  flippedColor: {r: 0.9450981, g: 0.5411765, b: 0.18823531, a: 1}
+  outOfBoundsColor: {r: 0.95294124, g: 0.7607844, b: 0.39607847, a: 1}
+  inProgressAlpha: 0.55
+--- !u!222 &1703517310
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703517307}
+  m_CullTransparentMesh: 1
 --- !u!1 &1705676933
 GameObject:
   m_ObjectHideFlags: 0
@@ -34603,7 +34683,7 @@ GameObject:
   - component: {fileID: 1707959680}
   - component: {fileID: 1707959681}
   m_Layer: 5
-  m_Name: Legend (1)
+  m_Name: Comparison
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
