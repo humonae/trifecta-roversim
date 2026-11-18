@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 8569853931921863109}
   - component: {fileID: 2079244744573332312}
   - component: {fileID: 3597745950382115996}
-  - component: {fileID: 8852902051171071216}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -129,6 +128,13 @@ MonoBehaviour:
     MinSuccessRate: 0.9
     MaxAverageGoalSeconds: 0
   logEpisodes: 1
+  reportSettings:
+    RecentMode: 1
+    RecentEpisodes: 100
+    RecentPercent: 10
+    RecentMinimum: 100
+    ProgressBlockSize: 100
+    AutosaveEveryEpisodes: 500
   python:
     PythonExecutable: 
     VenvFolder: venv
@@ -249,6 +255,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraSwitcher
   freeCam: {fileID: 0}
   roverCam: {fileID: 0}
+  switchToNewRovers: 1
+  keysFollowView: 1
+  freeCamMover: {fileID: 0}
 --- !u!114 &3597745950382115996
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -292,19 +301,3 @@ MonoBehaviour:
     ChassisRockPenaltyPerSecond: 0.2
   fallbackModel: {fileID: 0}
   logEpisodes: 1
---- !u!114 &8852902051171071216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6605497031338955241}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49ce1c469835ff4448b81f2ed8fcfe67, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EvaluationReportPanel
-  organizer: {fileID: 0}
-  reportText: {fileID: 0}
-  panel: {fileID: 0}
-  windowWidth: 520
