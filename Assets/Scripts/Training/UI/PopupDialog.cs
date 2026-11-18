@@ -49,11 +49,17 @@ namespace Training
         [SerializeField] private Color barTrackColor = new Color(0.2f, 0.2f, 0.2f, 1f);
 
         [Header("Layout")]
-        [SerializeField, Min(300f)] private float width = 560f;
+        [Tooltip("Window width. 0 sizes it from Text Size (28 × Text Size, so 504 at 18) to keep line lengths the same when the text changes size.")]
+        [SerializeField, Min(0f)] private float width;
+        [Tooltip("Font size of the title.")]
+        [SerializeField, Min(8f)] private float titleSize = 26f;
+        [Tooltip("Font size of the message, the \"Please wait\" line and the buttons.")]
+        [SerializeField, Min(8f)] private float textSize = 18f;
         [Tooltip("Seconds between dots in \"Please wait...\".")]
         [SerializeField, Min(0.1f)] private float dotInterval = 0.5f;
 
         private const string WaitText = "Please wait";
+        private const float WidthPerTextSize = 28f;
 
         private static readonly Dictionary<int, Sprite> roundedSprites = new Dictionary<int, Sprite>();
 
@@ -70,6 +76,8 @@ namespace Training
         private Func<string> progressDetail;
         private Func<float> progressValue;
         private float progressStarted;
+
+        private float WindowWidth => width > 0f ? Mathf.Max(300f, width) : textSize * WidthPerTextSize;
 
         public bool IsOpen => canvasObject != null && canvasObject.activeSelf;
         public bool ShowsProgress => IsOpen && progressValue != null;
@@ -195,7 +203,7 @@ namespace Training
             colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
             button.colors = colors;
 
-            TextMeshProUGUI label = CreateText("Label", go.transform, 20f, spec.Primary ? accentTextColor : textColor, font, FontStyles.Normal);
+            TextMeshProUGUI label = CreateText("Label", go.transform, textSize, spec.Primary ? accentTextColor : textColor, font, FontStyles.Normal);
             label.text = spec.Label;
             label.alignment = TextAlignmentOptions.Center;
             label.textWrappingMode = TextWrappingModes.NoWrap;
@@ -204,8 +212,8 @@ namespace Training
             var layout = go.GetComponent<LayoutElement>();
             layout.minWidth = 110f;
             layout.preferredWidth = Mathf.Max(110f, label.GetPreferredValues(spec.Label).x + 40f);
-            layout.preferredHeight = 40f;
-            layout.minHeight = 40f;
+            layout.preferredHeight = Mathf.Round(textSize * 2f);
+            layout.minHeight = layout.preferredHeight;
 
             PopupButton captured = spec;
             button.onClick.AddListener(() =>
@@ -240,7 +248,7 @@ namespace Training
             Image border = CreateImage("Window", canvasObject.transform, panelSprite != null ? panelSprite : Rounded(14), borderColor);
             window = border.rectTransform;
             window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
-            window.sizeDelta = new Vector2(width, 0f);
+            window.sizeDelta = new Vector2(WindowWidth, 0f);
             var borderLayout = border.gameObject.AddComponent<VerticalLayoutGroup>();
             borderLayout.padding = new RectOffset(1, 1, 1, 1);
             borderLayout.childControlWidth = borderLayout.childControlHeight = true;
@@ -257,10 +265,10 @@ namespace Training
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            title = CreateText("Title", panel.transform, 28f, textColor, titleFont != null ? titleFont : font,
+            title = CreateText("Title", panel.transform, titleSize, textColor, titleFont != null ? titleFont : font,
                 titleFont != null ? FontStyles.Normal : FontStyles.Bold);
 
-            message = CreateText("Message", panel.transform, 20f, secondaryTextColor, font, FontStyles.Normal);
+            message = CreateText("Message", panel.transform, textSize, secondaryTextColor, font, FontStyles.Normal);
             // Messages can contain things like "<=2.8.0" from pip, so don't treat them as tags.
             message.richText = false;
 
@@ -281,7 +289,7 @@ namespace Training
             progressFill.anchorMax = new Vector2(0f, 1f);
             progressFill.offsetMin = progressFill.offsetMax = Vector2.zero;
 
-            waitLabel = CreateText("Please Wait", progressGroup.transform, 20f, textColor, font, FontStyles.Normal);
+            waitLabel = CreateText("Please Wait", progressGroup.transform, textSize, textColor, font, FontStyles.Normal);
             waitLabel.text = WaitText + ".";
 
             var row = new GameObject("Buttons", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -322,6 +330,9 @@ namespace Training
             text.fontStyle = style;
             text.color = color;
             text.textWrappingMode = TextWrappingModes.Normal;
+            // Show backslashes as typed. Otherwise TextMesh Pro turns "\v", "\n" etc. into control characters,
+            // which garbled Windows paths like C:\Unity\Builds\v0.3-alpha\venv.
+            text.parseCtrlCharacters = false;
             text.raycastTarget = false;
             return text;
         }

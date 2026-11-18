@@ -35,7 +35,7 @@ namespace Training
             popup.Show(
                 environment.RepairsVenv ? "Repair the Python trainer?" : "Install the Python trainer?",
                 $"{intro}\n{environment.VenvFolder}\n\n" +
-                "This downloads a few GB (mostly PyTorch) and can take several minutes. It only happens once.",
+                "This can take several minutes. You only need to do this once.",
                 new PopupButton("Yes", () => answer(true), true),
                 new PopupButton("No", () => answer(false)));
         }

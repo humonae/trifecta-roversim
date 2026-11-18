@@ -203,7 +203,7 @@ namespace Training
                 ? " --index-url " + settings.WindowsTorchIndexUrl.Trim()
                 : "";
             yield return RunStep(venv, $"-m pip install {PythonProbe.Quote(settings.TorchPackage)}{torchIndex} {PipFlags}",
-                $"Downloading and installing PyTorch (step {++step} of {stepCount}). This is the big one.", TorchWeight, TorchSeconds, r => ok = r);
+                $"Downloading and installing PyTorch (step {++step} of {stepCount})", TorchWeight, TorchSeconds, r => ok = r);
             if (!Continue(ok))
                 yield break;
 
