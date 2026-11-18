@@ -12,8 +12,10 @@ namespace Training
         public string PythonExecutable = "";
         [Tooltip("Virtual environment the app creates and repairs. Relative paths start at the project folder (or the build folder).")]
         public string VenvFolder = "venv";
-        [Tooltip("Create the venv and install ml-agents automatically when it is missing or broken.")]
+        [Tooltip("When the venv is missing or broken, offer to create it and install PyTorch and ML-Agents (the user is asked first). Off: just say what to install by hand.")]
         public bool InstallAutomatically = true;
+        [Tooltip("Opened by the \"Python 3.10 is required\" popup. 3.10.11 is the last 3.10 release with installers.")]
+        public string PythonDownloadUrl = "https://www.python.org/downloads/release/python-31011/";
 
         [Header("Versions (com.unity.ml-agents 4.1.0)")]
         public string MinPythonVersion = "3.10.1";

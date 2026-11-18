@@ -36,6 +36,8 @@ namespace Training
         [SerializeField] private PythonSetupSettings python = new PythonSetupSettings();
         [SerializeField] private TrainerLaunchSettings trainer = new TrainerLaunchSettings();
         [SerializeField] private TrainerConfig trainerConfig = new TrainerConfig();
+        [Tooltip("Optional. Shows the Python setup questions and errors. Found or created automatically; add a PopupDialog to the scene to style it.")]
+        [SerializeField] private PopupDialog popup;
 
         private readonly List<TrainingInstance> instances = new List<TrainingInstance>();
         private readonly TrainerSession session = new TrainerSession();
@@ -225,9 +227,54 @@ namespace Training
             SetTimeScale(SpeedLimits.Slower(Speed));
         }
 
+        private PopupDialog Popup => popup != null ? popup : (popup = PopupDialog.FindOrCreate());
+
         private IEnumerator SetUpPythonAndLaunch()
         {
-            yield return pythonEnvironment.Ensure(python);
+            yield return pythonEnvironment.Check(python);
+            if (State != TrainingState.SettingUpPython)
+                yield break;
+
+            if (!pythonEnvironment.IsReady)
+            {
+                bool installFailed = false;
+                if (pythonEnvironment.Need == PythonSetupNeed.Packages && python.InstallAutomatically)
+                {
+                    bool? install = null;
+                    PythonSetupPopups.AskToInstall(Popup, pythonEnvironment, yes => install = yes);
+                    while (install == null && State == TrainingState.SettingUpPython)
+                        yield return null;
+                    if (State != TrainingState.SettingUpPython)
+                        yield break;
+
+                    if (install == false)
+                    {
+                        EndPythonSetup("Training cancelled: the Python trainer isn't installed.", false);
+                        yield break;
+                    }
+
+                    PythonSetupPopups.ShowInstalling(Popup, pythonEnvironment,
+                        () => BeginStop("Python install cancelled. Press Run Training to try again.", false));
+                    yield return pythonEnvironment.Install();
+                    if (State != TrainingState.SettingUpPython)
+                        yield break;
+
+                    installFailed = !pythonEnvironment.IsReady;
+                    if (pythonEnvironment.IsReady)
+                        Popup.Hide();
+                }
+
+                if (!pythonEnvironment.IsReady)
+                {
+                    if (pythonEnvironment.Need == PythonSetupNeed.Python)
+                        PythonSetupPopups.ShowPythonMissing(Popup, pythonEnvironment, python);
+                    else
+                        PythonSetupPopups.ShowProblem(Popup, pythonEnvironment, installFailed);
+
+                    EndPythonSetup(pythonEnvironment.Error, true);
+                    yield break;
+                }
+            }
 
             // Resuming: read the checkpoint with the trainer's Python, then rewrite the config with its network.
             string checkpointError = null;
@@ -626,6 +673,19 @@ namespace Training
 
             pythonEnvironment.Cancel();
             checkpoint.Cancel();
+
+            // The install question or progress bar belongs to the setup that just ended.
+            if (popup != null && popup.IsOpen)
+                popup.Hide();
+        }
+
+        private void EndPythonSetup(string status, bool isError)
+        {
+            setupRoutine = null;
+            RestoreTime();
+            if (isError)
+                ReportFailure(status);
+            SetState(TrainingState.Idle, isError ? Status : status);
         }
 
         private void DeactivateInstances()
