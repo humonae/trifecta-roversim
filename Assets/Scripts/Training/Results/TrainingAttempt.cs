@@ -50,6 +50,10 @@ namespace Training
             };
         }
 
+        public Evaluation.AttemptResult ToAttemptResult()
+        {
+            return new Evaluation.AttemptResult
+            {
                 Tile = Tile,
                 Rover = Rover,
                 Episode = Episode,
