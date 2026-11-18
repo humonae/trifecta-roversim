@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -36,8 +37,11 @@ namespace Training
 
         private LogBuffer buffer;
         private LogFilter filter;
-        private GUIStyle stackStyle;
-        private Texture2D background;
+        // Built at runtime. NonSerialized so Unity can't carry them over from an earlier Play session or a
+        // recompile (this project enters Play mode without reloading): a leftover style without its
+        // texture made the console skip setting itself up, and only the scrollbars were drawn.
+        [NonSerialized] private GUIStyle stackStyle;
+        [NonSerialized] private Texture2D background;
         private bool visible;
         private bool showStackTraces;
         private bool follow = true;
@@ -61,13 +65,28 @@ namespace Training
             buffer = new LogBuffer(maxMessages);
             filter = new LogFilter(backendTags) { BackendOnly = backendOnly };
             visible = startVisible;
+        }
+
+        // Subscribed here rather than in Awake so it's restored after a recompile, which calls OnEnable again.
+        private void OnEnable()
+        {
+            if (buffer == null)
+                buffer = new LogBuffer(maxMessages);
+            if (filter == null)
+                filter = new LogFilter(backendTags) { BackendOnly = backendOnly };
+
+            Application.logMessageReceivedThreaded -= buffer.Add;
             Application.logMessageReceivedThreaded += buffer.Add;
+        }
+
+        private void OnDisable()
+        {
+            if (buffer != null)
+                Application.logMessageReceivedThreaded -= buffer.Add;
         }
 
         private void OnDestroy()
         {
-            if (buffer != null)
-                Application.logMessageReceivedThreaded -= buffer.Add;
             if (background != null)
                 Destroy(background);
         }
@@ -226,7 +245,8 @@ namespace Training
 
         private void EnsureStyles()
         {
-            if (stackStyle != null)
+            // Check every piece, not just one: any of them can be missing on its own (see the fields above).
+            if (stackStyle != null && background != null && styles.Count == 3)
                 return;
 
             styles[LogType.Log] = LineStyle(new Color(0.88f, 0.88f, 0.88f));
@@ -234,7 +254,9 @@ namespace Training
             styles[LogType.Error] = LineStyle(new Color(1f, 0.45f, 0.42f));
             stackStyle = LineStyle(new Color(0.6f, 0.6f, 0.6f));
 
-            background = new Texture2D(1, 1);
+            if (background != null)
+                Destroy(background);
+            background = new Texture2D(1, 1, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
             background.SetPixel(0, 0, new Color(0.06f, 0.06f, 0.07f, backgroundOpacity));
             background.Apply();
         }

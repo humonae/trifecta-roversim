@@ -177,8 +177,13 @@ namespace Training
                 Destroy(content.gameObject);
             arrows.Clear();
 
-            if (arrowTexture == null)
+            // Check both: either can be missing on its own (e.g. carried over from an earlier Play session).
+            if (arrowTexture == null || arrowSprite == null)
             {
+                if (arrowSprite != null)
+                    Destroy(arrowSprite);
+                if (arrowTexture != null)
+                    Destroy(arrowTexture);
                 arrowTexture = ArrowTexture.Create(ArrowTextureSize);
                 arrowSprite = Sprite.Create(arrowTexture, new Rect(0, 0, ArrowTextureSize, ArrowTextureSize), new Vector2(0.5f, 0.5f), 100f);
             }
