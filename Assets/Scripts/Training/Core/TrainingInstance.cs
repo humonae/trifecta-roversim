@@ -13,6 +13,8 @@ namespace Training
         private EpisodeRewards rewards;
         private RockContacts rockContacts;
         private readonly EpisodeTimer timer = new EpisodeTimer();
+        private readonly SpawnSettle settle = new SpawnSettle();
+        private readonly StallCheck stall = new StallCheck();
 
         private RoverAIController rover;
         private Transform roverRoot;
@@ -27,6 +29,7 @@ namespace Training
         private bool hitRock;
         private bool wheelsOnRock;
         private float startDistance;
+        private bool stalled;
 
         public event Action<TrainingInstance, EpisodeOutcome> EpisodeEnded;
 
@@ -41,6 +44,8 @@ namespace Training
         public bool EpisodeWheelsOnRock => wheelsOnRock;
         public float EpisodeStartDistance => startDistance;
         public float EpisodeFinalDistance => chassis != null ? DistanceToGoal() : 0f;
+        // The episode ended because the rover stopped making progress. Its outcome is still TimedOut.
+        public bool EpisodeStalled => stalled;
 
         public bool Initialize(InstanceSetup instanceSetup, out string error)
         {
@@ -128,11 +133,14 @@ namespace Training
             agent.SetTarget(layout.Goal);
 
             timer.Restart(setup.Request.EpisodeSeconds);
-            rewards.Begin(DistanceToGoal());
+            startDistance = EpisodeMonitor.HorizontalDistance(layout.Spawn.position, layout.Goal);
+            // Not DistanceToGoal(): the chassis Transform still has the old pose here (see SpawnSettle).
+            rewards.Begin(startDistance);
             rockContacts.Clear();
             hitRock = false;
             wheelsOnRock = false;
-            startDistance = EpisodeMonitor.HorizontalDistance(layout.Spawn.position, layout.Goal);
+            stalled = false;
+            settle.Begin(spawn.position);
             episodeRunning = true;
         }
 
@@ -151,6 +159,22 @@ namespace Training
             if (!episodeRunning || rover == null)
                 return;
 
+            // Skip rewards, the timer and the end checks until the chassis reports the spawn pose.
+            if (settle.Waiting)
+            {
+                rockContacts.Clear();
+                SpawnSettle.Result result = settle.Step(chassis);
+                if (result == SpawnSettle.Result.Waiting)
+                    return;
+
+                if (result == SpawnSettle.Result.GaveUp)
+                    Debug.LogWarning($"[Training] Instance {Index}: rover not at its spawn after {SpawnSettle.MaxSteps} physics steps; starting the episode anyway.", this);
+
+                rewards.Begin(DistanceToGoal());
+                stall.Begin(DistanceToGoal());
+                return;
+            }
+
             float deltaTime = Time.fixedDeltaTime;
             timer.Advance(deltaTime);
             rover.AddReward(rewards.Step(DistanceToGoal(), ForwardSpeed(), rockContacts.WheelsTouching, rockContacts.ChassisTouching, deltaTime));
@@ -160,18 +184,31 @@ namespace Training
 
             EpisodeOutcome outcome = monitor.Evaluate(chassis, layout.Goal, Arena, timer);
             if (outcome != EpisodeOutcome.Running)
+            {
                 EndEpisode(outcome);
+                return;
+            }
+
+            EpisodeRules rules = setup.Rules;
+            if (stall.Step(DistanceToGoal(), deltaTime, rules.StallSeconds, rules.StallProgressMeters))
+            {
+                stalled = true;
+                EndEpisode(EpisodeOutcome.TimedOut);
+            }
         }
 
         private void EndEpisode(EpisodeOutcome outcome)
         {
             episodeRunning = false;
-            rover.AddReward(rewards.Final(outcome));
+            // A stall is reported as a timeout, but it's the rover's own doing, so it's trained like a failure:
+            // a penalty, and a real end of the episode. A real timeout is only the clock running out, so
+            // ML-Agents is told the episode was cut short (EpisodeInterrupted) and it isn't penalised.
+            rover.AddReward(stalled ? setup.Rules.StallPenalty : rewards.Final(outcome));
 
             if (EpisodeEnded != null)
                 EpisodeEnded.Invoke(this, outcome);
 
-            if (outcome == EpisodeOutcome.TimedOut)
+            if (outcome == EpisodeOutcome.TimedOut && !stalled)
                 rover.EpisodeInterrupted();
             else
                 rover.EndEpisode();

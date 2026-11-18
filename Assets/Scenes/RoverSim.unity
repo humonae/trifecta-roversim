@@ -56584,9 +56584,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 247990866}
     - target: {fileID: 1841537969352967446, guid: 7d99cda5fa2947c4eb4fa5681fac59db, type: 3}
+      propertyPath: EpochMinutes
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1841537969352967446, guid: 7d99cda5fa2947c4eb4fa5681fac59db, type: 3}
       propertyPath: SuccessSlider
       value: 
       objectReference: {fileID: 1356929762}
+    - target: {fileID: 1841537969352967446, guid: 7d99cda5fa2947c4eb4fa5681fac59db, type: 3}
+      propertyPath: EpisodeSeconds
+      value: 120
+      objectReference: {fileID: 0}
     - target: {fileID: 1841537969352967446, guid: 7d99cda5fa2947c4eb4fa5681fac59db, type: 3}
       propertyPath: OutputFileText
       value: 
@@ -62296,9 +62304,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 724815446}
     - target: {fileID: 6455376546211775665, guid: c9acc0e92e6634546af1946734224f4d, type: 3}
+      propertyPath: rules.GoalRadius
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6455376546211775665, guid: c9acc0e92e6634546af1946734224f4d, type: 3}
       propertyPath: simulationManager
       value: 
       objectReference: {fileID: 724815445}
+    - target: {fileID: 6455376546211775665, guid: c9acc0e92e6634546af1946734224f4d, type: 3}
+      propertyPath: trainerConfig.Gamma
+      value: 0.995
+      objectReference: {fileID: 0}
     - target: {fileID: 6605497031338955241, guid: c9acc0e92e6634546af1946734224f4d, type: 3}
       propertyPath: m_Name
       value: GameManager
