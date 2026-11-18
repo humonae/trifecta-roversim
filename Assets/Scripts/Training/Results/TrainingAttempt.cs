@@ -49,5 +49,20 @@ namespace Training
                 Goal = goal
             };
         }
+
+                Tile = Tile,
+                Rover = Rover,
+                Episode = Episode,
+                Outcome = Outcome,
+                Success = Success,
+                Seconds = Seconds,
+                StartDistance = StartDistance,
+                FinalDistance = FinalDistance,
+                HitRock = HitRock,
+                WheelsOnRock = WheelsOnRock,
+                Spawn = Spawn,
+                Goal = Goal
+            };
+        }
     }
 }
