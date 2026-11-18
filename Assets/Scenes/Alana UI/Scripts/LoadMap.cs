@@ -10,6 +10,14 @@ public class LoadMap : MonoBehaviour
 
     public TileGrid gridSelection;
 
+    [Tooltip("Tile of the opened map shown when the scene starts (its grid label, e.g. \"B4\"). Empty shows none.")]
+    public string StartTile = "B4";
+
+    // The tile currently shown, or null. Training and evaluation change it too.
+    public GameObject ShownTile { get; private set; }
+    // Fired every time a tile is shown, even the same one again (HumanRoverSpawner respawns the rover).
+    public event System.Action<GameObject> TileShown;
+
     Dictionary<string, GameObject[]> maps; // Map name, dictionary of tiles
     readonly Dictionary<string, GameObject> currentTiles = new Dictionary<string, GameObject>();  // "C6" -> tile
     string currentMap = "";
@@ -25,6 +33,12 @@ public class LoadMap : MonoBehaviour
         HideAll();
 
         OpenMap("Jezero");
+    }
+
+    void Start()
+    {
+        if (ShownTile == null && !string.IsNullOrEmpty(StartTile) && !LoadTile(StartTile))
+            Debug.LogWarning($"Start tile \"{StartTile}\" isn't in the \"{currentMap}\" map.");
     }
     public void OpenMap(string mapName)
     {
@@ -90,10 +104,13 @@ public class LoadMap : MonoBehaviour
         HideAll();                          // hides tiles from every map, not just this one
         currentTiles[label].SetActive(true);
         gridSelection.selectedTile = label;
+        ShownTile = currentTiles[label];
+        TileShown?.Invoke(ShownTile);
     }
 
     void HideAll()
     {
+        ShownTile = null;
         foreach (var arr in maps.Values)
             foreach (var t in arr)
                 if (t != null) t.SetActive(false);

@@ -2442,40 +2442,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!1 &77469466 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7133273343619913092, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-  m_PrefabInstance: {fileID: 6757632568434167243}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &77469469
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 77469466}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31b669ce304a01740aacbb6a397ffc4a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Training.TimeWarpPlacement
-  organizer: {fileID: 0}
-  arrowCount: 10
-  speedUpKey: 8
-  slowDownKey: 7
-  targetRect: {fileID: 2134674361}
-  placementMode: 3
-  scaleToFitTarget: 1
-  topOffset: 72
-  rightMargin: 12
-  gapBelow: 6
-  arrowSize: 18
-  arrowGap: 2
-  showClock: 1
-  litColor: {r: 0.36, g: 0.92, b: 0.36, a: 1}
-  unlitColor: {r: 0.32, g: 0.34, b: 0.32, a: 1}
-  laggingColor: {r: 1, g: 0.72, b: 0.25, a: 1}
-  backgroundOpacity: 0.8
 --- !u!1 &78122402
 GameObject:
   m_ObjectHideFlags: 0
@@ -15467,7 +15433,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2.5, y: -217.01337}
+  m_AnchoredPosition: {x: 2.5, y: -217.01349}
   m_SizeDelta: {x: 441, y: 1295.465}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &581395044
@@ -16179,7 +16145,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1783464937}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.66496456
+  m_Size: 0.33248228
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -70307,74 +70273,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1001 &6757632568434167243
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 2102.0464
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 36.3158
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1343.4841
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1614324723265315738, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7133273343619913092, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_Name
-      value: TimeWarp
-      objectReference: {fileID: 0}
-    - target: {fileID: 8313928158068993025, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8313928158068993025, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      propertyPath: placeBelow
-      value: 
-      objectReference: {fileID: 2265262263416931500}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7133273343619913092, guid: 1643d62c059296447b6340d8202b141f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 77469469}
-  m_SourcePrefab: {fileID: 100100000, guid: 1643d62c059296447b6340d8202b141f, type: 3}
 --- !u!114 &6762940611867615377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75827,5 +75725,4 @@ SceneRoots:
   - {fileID: 1109635426}
   - {fileID: 8240927871086284037}
   - {fileID: 1147290319}
-  - {fileID: 6757632568434167243}
   - {fileID: 443064829}

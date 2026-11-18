@@ -68,28 +68,73 @@ public class ONNXFilePicker : MonoBehaviour
         }
     }
 
-    public void OpenPTPretrainedPicker() 
+    // For the training panel's Model > Browse: picks a .pt checkpoint to continue training from.
+    // Nothing is loaded until Load Model (LoadPTPretrained); picking a new file unloads the previous one.
+    public void OpenPTPretrainedPicker()
     {
+        var training = FindAnyObjectByType<TrainingSettings>();
+        if (training == null)
+        {
+            Debug.LogWarning("No TrainingSettings found; the picked checkpoint won't be used.");
+            return;
+        }
+
         // 1. Change the filter to only accept "pt"
         var extensions = new[] { new ExtensionFilter("PyTorch Model", "pt") };
-        
+
         // 2. Update the window title text to match
-        var paths = StandaloneFileBrowser.OpenFilePanel("Select a PyTorch Model", "", extensions, false);
+        var paths = StandaloneFileBrowser.OpenFilePanel("Select a PyTorch Model", CheckpointStartFolder(training), extensions, false);
 
         if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
         {
             string modelPath = paths[0];
             Debug.Log($"Selected PyTorch file: {modelPath}");
 
-            if (selectedFileLabel[mode] != null)
-                selectedFileLabel[mode].text = modelPath;
-
-            OnModelSelected(modelPath);
+            // Not OnModelSelected: that sets the Evaluation panel's model, which must be an .onnx.
+            training.SelectCheckpoint(modelPath);
         }
         else
         {
             Debug.Log("File selection cancelled.");
         }
+    }
+
+    // For the training panel's Load Model button: loads the picked .pt if it's a valid ML-Agents
+    // checkpoint; otherwise the selection is cleared and training starts from scratch.
+    public void LoadPTPretrained()
+    {
+        var training = FindAnyObjectByType<TrainingSettings>();
+        if (training != null)
+            training.LoadSelectedCheckpoint();
+        else
+            Debug.LogWarning("No TrainingSettings found; the checkpoint can't be loaded.");
+    }
+
+    // For an optional button that goes back to training a new network.
+    public void ClearPTPretrained()
+    {
+        var training = FindAnyObjectByType<TrainingSettings>();
+        if (training != null)
+            training.ClearResumeCheckpoint();
+    }
+
+    // The last pick's folder, else the checkpoint output folder, else the default results folder
+    // (checkpoints are saved in <results>/<run>/<behavior>/).
+    static string CheckpointStartFolder(TrainingSettings training)
+    {
+        string picked = !string.IsNullOrWhiteSpace(training.SelectedCheckpointPath) ? training.SelectedCheckpointPath : training.ResumeCheckpointPath;
+        if (!string.IsNullOrWhiteSpace(picked))
+        {
+            string folder = Path.GetDirectoryName(picked);
+            if (Directory.Exists(folder))
+                return folder;
+        }
+
+        if (!string.IsNullOrWhiteSpace(training.ModelOutputPath) && Directory.Exists(training.ModelOutputPath.Trim()))
+            return training.ModelOutputPath.Trim();
+
+        string results = Training.PythonPaths.Resolve(training.defaults != null ? training.defaults.DefaultResultsDirectory : "results");
+        return Directory.Exists(results) ? results : "";
     }
 
 

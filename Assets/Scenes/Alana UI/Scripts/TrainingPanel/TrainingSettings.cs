@@ -47,6 +47,8 @@ public class TrainingSettings : MonoBehaviour
     public TMP_Text ObstacleDensityText;
     public TMP_Text Folder;
     public TMP_Text OutputFileText;
+    // The training panel's Model label (TrainingOptions/Content/ModelSelect/.../Browse/GameObject/placeholder).
+    public TMP_Text PretrainedModelText;
 
 
     public void Start()
@@ -78,6 +80,15 @@ public class TrainingSettings : MonoBehaviour
     public string ModelOutputPath;
     
     public string ModelName;
+
+    // The .pt picked with Model > Browse (ONNXFilePicker.OpenPTPretrainedPicker). Nothing is loaded until Load Model.
+    public string SelectedCheckpointPath = "";
+    // The loaded .pt that the next training run continues from. Empty trains a new network.
+    // Set only by Load Model (ONNXFilePicker.LoadPTPretrained), and only for a valid ML-Agents checkpoint.
+    public string ResumeCheckpointPath = "";
+    // Fired with the reason when Load Model rejects the selected file (the selection is then cleared).
+    public event System.Action<string> CheckpointRejected;
+    private string checkpointRejection;
 
     public void SetNetworkArchitecture(string name) => NetworkArchitecture = name;
  
@@ -153,6 +164,79 @@ public class TrainingSettings : MonoBehaviour
         ModelName = System.IO.Path.GetFileNameWithoutExtension(fullPath);
     }
 
+    // Model > Browse: remember the file, and unload any loaded checkpoint until Load Model is pressed.
+    public void SelectCheckpoint(string path)
+    {
+        SelectedCheckpointPath = string.IsNullOrWhiteSpace(path) ? "" : path.Trim();
+        ResumeCheckpointPath = "";
+        checkpointRejection = null;
+        ShowPretrainedModel();
+    }
+
+    // Load Model: load the selected file if it's a valid ML-Agents .pt checkpoint, otherwise clear it.
+    public bool LoadSelectedCheckpoint()
+    {
+        string reason, detail;
+        if (Training.CheckpointFile.Check(SelectedCheckpointPath, out reason, out detail))
+        {
+            ResumeCheckpointPath = SelectedCheckpointPath;
+            checkpointRejection = null;
+            Debug.Log($"[Training] Loaded checkpoint '{ResumeCheckpointPath}'. The next training run continues from it.");
+            ShowPretrainedModel();
+            return true;
+        }
+
+        SelectedCheckpointPath = "";
+        ResumeCheckpointPath = "";
+        checkpointRejection = reason;
+        Debug.LogWarning($"[Training] Model not loaded: {detail} Training will start from scratch.");
+        ShowPretrainedModel();
+        CheckpointRejected?.Invoke(detail);
+        return false;
+    }
+
+    // Select and load in one step, for code.
+    public bool SetResumeCheckpoint(string path)
+    {
+        SelectCheckpoint(path);
+        return LoadSelectedCheckpoint();
+    }
+
+    // Back to training a new network.
+    public void ClearResumeCheckpoint()
+    {
+        SelectedCheckpointPath = "";
+        ResumeCheckpointPath = "";
+        checkpointRejection = null;
+        ShowPretrainedModel();
+    }
+
+    private void ShowPretrainedModel()
+    {
+        if (PretrainedModelText == null)
+            return;
+
+        if (!string.IsNullOrEmpty(ResumeCheckpointPath))
+            PretrainedModelText.text = DescribeCheckpoint(ResumeCheckpointPath);
+        else if (!string.IsNullOrEmpty(SelectedCheckpointPath))
+            PretrainedModelText.text = DescribeCheckpoint(SelectedCheckpointPath) + " (not loaded)";
+        else
+            PretrainedModelText.text = string.IsNullOrEmpty(checkpointRejection) ? "None" : $"None ({checkpointRejection})";
+    }
+
+    // "<run> / <file>": every run has a checkpoint.pt, so the run folder's name says which one it is.
+    private static string DescribeCheckpoint(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return "None";
+
+        string behaviorFolder = System.IO.Path.GetDirectoryName(path);
+        string runFolder = string.IsNullOrEmpty(behaviorFolder) ? null : System.IO.Path.GetDirectoryName(behaviorFolder);
+        string run = string.IsNullOrEmpty(runFolder) ? null : System.IO.Path.GetFileName(runFolder);
+        string file = System.IO.Path.GetFileName(path);
+        return string.IsNullOrEmpty(run) ? file : $"{run} / {file}";
+    }
+
     public void Refresh()
     {   
         //ideally replace with the default values set in trainingDefaults rather than reassigning them to their current values
@@ -171,6 +255,7 @@ public class TrainingSettings : MonoBehaviour
         ObstacleDensityText.text = (ObstacleDensity * 10f).ToString("0") + "%";
         Folder.text = ModelOutputPath;
         OutputFileText.text = ModelName;
+        ShowPretrainedModel();
     }
 
 
