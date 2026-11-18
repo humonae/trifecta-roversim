@@ -29,6 +29,8 @@ namespace Training
         [Tooltip("Window and optional time target. The success target comes from the Training panel.")]
         [SerializeField] private EarlyStoppingSettings earlyStopping = new EarlyStoppingSettings();
         [SerializeField] private bool logEpisodes = true;
+        [Tooltip("What \"recent\" means in the training report, its learning-curve blocks, and how often it's saved during a run.")]
+        [SerializeField] private TrainingReportSettings reportSettings = new TrainingReportSettings();
 
         [Header("Python")]
         [SerializeField] private PythonSetupSettings python = new PythonSetupSettings();
@@ -38,6 +40,8 @@ namespace Training
         private readonly List<TrainingInstance> instances = new List<TrainingInstance>();
         private readonly TrainerSession session = new TrainerSession();
         private readonly PythonEnvironment pythonEnvironment = new PythonEnvironment();
+        private readonly CheckpointResume checkpoint = new CheckpointResume();
+        private bool discardModel;
         private Coroutine setupRoutine;
         private string configPath;
         private int decisionPeriod = 1;
@@ -50,6 +54,11 @@ namespace Training
         private string stopReason;
         private bool stopIsError;
         private bool stopWasConnected;
+        // The run reached its iteration target, step budget or early-stopping goal (not Stop or an error).
+        private bool stopCompleted;
+        private float runEndTime;
+        private TrainingReport report;
+        private TrainingReport previousRun;
         private float requestedSpeed = -1f;
         private bool speedApplied;
         private float runStartTime;
@@ -60,6 +69,18 @@ namespace Training
         public event Action<TrainingState> StateChanged;
         public event Action<string> StatusChanged;
         public event Action<float> SpeedChanged;
+        // Same pattern as EvaluationOrganizer:
+        // a run has started; the report is empty but has its run number and settings.
+        public event Action<TrainingReport> RunStarted;
+        // An episode finished; the report already includes it.
+        public event Action<TrainingAttempt, TrainingReport> EpisodeFinished;
+        // The run ended; the report is final and saved (path, or null if saving failed).
+        public event Action<TrainingReport, string> Finished;
+
+        // The current run's report, updated after every episode. Null before the first run.
+        public TrainingReport Report => report;
+        public TrainingReport LastReport { get; private set; }
+        public string LastReportPath { get; private set; }
 
         public TrainingState State { get; private set; }
         public string Status { get; private set; } = "Ready";
@@ -130,6 +151,9 @@ namespace Training
                 MaxAverageGoalSeconds = earlyStopping.MaxAverageGoalSeconds
             };
             trainedTiles.Clear();
+            discardModel = false;
+            stopCompleted = false;
+            checkpoint.Cancel();
             originalTimeScale = Time.timeScale;
             originalCaptureFramerate = Time.captureFramerate;
             originalRunInBackground = Application.runInBackground;
@@ -204,15 +228,27 @@ namespace Training
         private IEnumerator SetUpPythonAndLaunch()
         {
             yield return pythonEnvironment.Ensure(python);
+
+            // Resuming: read the checkpoint with the trainer's Python, then rewrite the config with its network.
+            string checkpointError = null;
+            if (State == TrainingState.SettingUpPython && pythonEnvironment.IsReady && request.ResumesFromCheckpoint)
+            {
+                SetStatus("Reading the checkpoint...");
+                yield return checkpoint.Prepare(pythonEnvironment.Python, request, roverPrefab, trainerConfig);
+                checkpointError = checkpoint.Error;
+                if (checkpointError == null && State == TrainingState.SettingUpPython)
+                    TrainerConfigWriter.TryWrite(request, behaviorName, trainerConfig, out configPath, out checkpointError);
+            }
+
             setupRoutine = null;
 
             if (State != TrainingState.SettingUpPython)
                 yield break;
 
-            if (!pythonEnvironment.IsReady || !session.BeginLaunch(trainer, request, configPath, pythonEnvironment.Python))
+            if (checkpointError != null || !pythonEnvironment.IsReady || !session.BeginLaunch(trainer, request, configPath, pythonEnvironment.Python))
             {
                 RestoreTime();
-                ReportFailure(pythonEnvironment.IsReady ? session.Error : pythonEnvironment.Error);
+                ReportFailure(checkpointError ?? (pythonEnvironment.IsReady ? session.Error : pythonEnvironment.Error));
                 SetState(TrainingState.Idle, Status);
                 yield break;
             }
@@ -227,7 +263,7 @@ namespace Training
             switch (State)
             {
                 case TrainingState.SettingUpPython:
-                    if (pythonEnvironment.Status != Status && !string.IsNullOrEmpty(pythonEnvironment.Status))
+                    if (!checkpoint.IsBusy && pythonEnvironment.Status != Status && !string.IsNullOrEmpty(pythonEnvironment.Status))
                         SetStatus(pythonEnvironment.Status);
                     break;
 
@@ -301,6 +337,10 @@ namespace Training
             Debug.Log($"[Training] Run '{session.RunId}' started on tile '{epoch.Tile.name}' with {instances.Count} rover(s).", this);
             speedApplied = false;
             runStartTime = Time.time;
+
+            previousRun = TrainingHistory.Latest();
+            report = TrainingReport.Create(request, TrainingHistory.NextRunNumber(), instances.Count, reportSettings, previousRun, DateTime.Now);
+            RunStarted?.Invoke(report);
             SetState(TrainingState.Running, RunningStatus());
         }
 
@@ -334,6 +374,7 @@ namespace Training
 
             if (request.IterationUnit == IterationUnit.Epochs && stats.CompletedEpochs >= request.MaxIterations)
             {
+                stopCompleted = true;
                 BeginStop($"Reached {request.MaxIterations} epochs.", false);
                 return;
             }
@@ -356,6 +397,7 @@ namespace Training
         private void OnEpisodeEnded(TrainingInstance instance, EpisodeOutcome outcome)
         {
             stats.RecordEpisode(outcome, instance.Timer.Elapsed);
+            RecordAttempt(instance, outcome);
 
             if (logEpisodes)
             {
@@ -365,6 +407,33 @@ namespace Training
 
             if (State == TrainingState.Running)
                 SetStatus(RunningStatus());
+        }
+
+        private void RecordAttempt(TrainingInstance instance, EpisodeOutcome outcome)
+        {
+            if (report == null)
+                return;
+
+            TrainingAttempt attempt = TrainingAttempt.From(outcome, instance.Timer.Elapsed, instance.Rover.GetCumulativeReward(),
+                instance.EpisodeStartDistance, instance.EpisodeFinalDistance, instance.EpisodeHitRock, instance.EpisodeWheelsOnRock,
+                instance.Layout.Spawn.position, instance.Layout.Goal);
+            attempt.Episode = report.AttemptLog.Count;
+            attempt.Epoch = epoch != null ? epoch.Number : 0;
+            attempt.Tile = epoch != null && epoch.Tile != null ? epoch.Tile.name : "";
+            attempt.Rover = instance.Index;
+            attempt.EndedAt = Time.time - runStartTime;
+
+            report.Record(attempt, previousRun);
+            EpisodeFinished?.Invoke(attempt, report);
+
+            int autosave = report.Settings.AutosaveEveryEpisodes;
+            if (autosave > 0 && report.Episodes % autosave == 0)
+            {
+                report.StopReason = "In progress";
+                report.SimulatedSeconds = attempt.EndedAt;
+                report.Epochs = epoch != null ? epoch.Number : 0;
+                TrainingHistory.Save(report, session.RunDirectory);
+            }
         }
 
         private void ApplySpeedOnceTrainerStarted()
@@ -379,14 +448,26 @@ namespace Training
         private void CheckRunEnded()
         {
             string reason;
-            if (session.QuitReceived)
-                BeginStop($"The trainer reached its {request.MaxTrainerSteps:N0}-step budget.", false);
+            if (checkpoint.LoadFailed(session.Output, out reason))
+            {
+                // The trainer is only training a fresh network; don't hand that out as the resumed model.
+                discardModel = true;
+                BeginStop(reason, true);
+            }
+            else if (session.QuitReceived)
+                StopCompleted($"The trainer reached its {request.MaxTrainerSteps:N0}-step budget.");
             else if (session.ProcessExited)
                 BeginStop($"The Python trainer exited unexpectedly with code {session.ExitCode}. Last output:\n{session.RecentOutput()}", true);
             else if (request.IterationUnit == IterationUnit.Episodes && stats.Episodes >= request.MaxIterations)
-                BeginStop($"Reached {request.MaxIterations} episodes.", false);
+                StopCompleted($"Reached {request.MaxIterations} episodes.");
             else if (request.EarlyStopping && EarlyStopping.ShouldStop(stats, activeEarlyStopping, out reason))
-                BeginStop(reason, false);
+                StopCompleted(reason);
+        }
+
+        private void StopCompleted(string reason)
+        {
+            stopCompleted = true;
+            BeginStop(reason, false);
         }
 
         private void BeginStop(string reason, bool isError)
@@ -405,6 +486,7 @@ namespace Training
             stopReason = reason;
             stopIsError = isError;
             stopWasConnected = session.IsConnected;
+            runEndTime = Time.time;
 
             RestoreTime();
             session.BeginClose();
@@ -419,15 +501,24 @@ namespace Training
         private void FinishStop()
         {
             string message = stopReason;
-            string model = stopWasConnected && session.RunId == request.RunId
+            string model = stopWasConnected && !discardModel && session.RunId == request.RunId
                 ? ModelExporter.FindModel(session.RunDirectory, behaviorName)
                 : null;
 
+            string savedModel = null;
             if (model != null)
             {
                 string copy = ModelExporter.CopyTo(model, request.ModelOutputPath);
+                savedModel = copy ?? model;
                 message += $" Model saved to {copy ?? model}";
-                SaveRunInfo(copy ?? model);
+                // Also in the run folder, so a later run resuming from this run's checkpoints can find its tiles.
+                SaveRunInfo(model);
+                if (copy != null && copy != model)
+                    SaveRunInfo(copy);
+            }
+            else if (discardModel)
+            {
+                message += " The model was not copied to the output file.";
             }
             else if (stopWasConnected && !stopIsError)
             {
@@ -439,7 +530,24 @@ namespace Training
             else
                 Debug.Log($"[Training] {message}", this);
 
+            FinishReport(savedModel);
             SetState(TrainingState.Idle, message);
+        }
+
+        // Final numbers, saved to TrainingHistory.Folder and the run's results folder, then Finished.
+        private void FinishReport(string modelPath)
+        {
+            if (report == null || report.AttemptLog.Count == 0)
+                return;
+
+            report.Finish(stopCompleted && !stopIsError, stopIsError, stopReason, DateTime.Now, runEndTime - runStartTime,
+                epoch != null ? epoch.Number : 0, modelPath, previousRun);
+            LastReportPath = TrainingHistory.Save(report, session.RunDirectory);
+            LastReport = report;
+
+            string saved = LastReportPath != null ? $"Saved to {LastReportPath}" : "The training report could not be saved; see the warnings above.";
+            Debug.Log($"[Training] {report.Summary()}\n\nLearning curve:\n{report.ProgressTable()}\n{saved}", this);
+            Finished?.Invoke(report, LastReportPath);
         }
 
         private void FinishFailedLaunch()
@@ -461,6 +569,9 @@ namespace Training
                 error = "No map tile is loaded. Pick a map (or load a tile from the map grid) before training.";
 
             if (error != null)
+                return false;
+
+            if (!CheckpointResume.ValidatePath(request.ResumeFrom, out error))
                 return false;
 
             var behavior = roverPrefab.GetComponentInChildren<BehaviorParameters>(true);
@@ -501,6 +612,7 @@ namespace Training
                 Seed = request.Seed
             };
 
+            checkpoint.AddLineage(info, request);
             info.TrySave(modelPath);
         }
 
@@ -513,6 +625,7 @@ namespace Training
             }
 
             pythonEnvironment.Cancel();
+            checkpoint.Cancel();
         }
 
         private void DeactivateInstances()

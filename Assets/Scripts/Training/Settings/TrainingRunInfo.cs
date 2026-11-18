@@ -16,6 +16,9 @@ namespace Training
         public List<string> Tiles = new List<string>();
         public string FinishedAt = "";
         public int Seed;
+        [Tooltip("The .pt this run continued from, if any. Tiles then includes the tiles that checkpoint trained on, when its record was found.")]
+        public string InitializedFrom = "";
+        public long InitializedFromStep;
 
         public static string PathFor(string modelPath)
         {

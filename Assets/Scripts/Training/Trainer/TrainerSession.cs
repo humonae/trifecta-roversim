@@ -52,6 +52,9 @@ namespace Training
         public bool ProcessExited => process != null && process.HasExited;
         public int ExitCode => process != null ? process.ExitCode : 0;
         public string RunDirectory => RunId != null ? Path.Combine(ResultsDirectory, RunId) : null;
+        public IReadOnlyList<string> Output => process != null ? process.Lines : NoLines;
+
+        private static readonly string[] NoLines = new string[0];
 
         public bool BeginLaunch(TrainerLaunchSettings launchSettings, TrainingRequest trainingRequest, string trainerConfigPath, PythonCommand pythonCommand)
         {
