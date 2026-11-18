@@ -5423,8 +5423,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2621439727030932556}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.19356668, y: 0.5108373, z: -0.11926783, w: 0.8290672}
-  m_LocalPosition: {x: -0.041230768, y: 0.022797246, z: -0.020755526}
+  m_LocalRotation: {x: 0.08949015, y: -0.3040264, z: 0.028699223, w: 0.9480168}
+  m_LocalPosition: {x: 0.04625508, y: 0.015150457, z: -0.06469946}
   m_LocalScale: {x: 0.010000001, y: 0.01, z: 0.010000001}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5507,7 +5507,7 @@ MonoBehaviour:
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: 63.27932
+    Value: -35.56179
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -5517,7 +5517,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: 26.283453
+    Value: 10.785158
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -5527,7 +5527,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   RadialAxis:
-    Value: 1.0296571
+    Value: 1.6192712
     Center: 1
     Range: {x: 0.5, y: 5}
     Wrap: 0
@@ -5587,8 +5587,8 @@ MonoBehaviour:
       Enabled: 1
       Input:
         InputAction: {fileID: -9134662583311989535, guid: cf73f9556db42fd449304c372ff50ac9, type: 3}
-        Gain: 5
-        CancelDeltaTime: 0
+        Gain: 1
+        CancelDeltaTime: 1
       InputValue: 0
       Driver:
         AccelTime: 0.1
@@ -5598,8 +5598,8 @@ MonoBehaviour:
       Enabled: 1
       Input:
         InputAction: {fileID: -9134662583311989535, guid: cf73f9556db42fd449304c372ff50ac9, type: 3}
-        Gain: 5
-        CancelDeltaTime: 0
+        Gain: 1
+        CancelDeltaTime: 1
       InputValue: 0
       Driver:
         AccelTime: 0.1
@@ -5609,8 +5609,8 @@ MonoBehaviour:
       Enabled: 1
       Input:
         InputAction: {fileID: 6651042537039451343, guid: cf73f9556db42fd449304c372ff50ac9, type: 3}
-        Gain: -5
-        CancelDeltaTime: 0
+        Gain: -1
+        CancelDeltaTime: 1
       InputValue: -0
       Driver:
         AccelTime: 0.1
