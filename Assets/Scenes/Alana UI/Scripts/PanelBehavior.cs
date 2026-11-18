@@ -12,6 +12,17 @@ public class PanelBehavior : MonoBehaviour
     public GameObject Button2;
 
     public GameObject panel;
+
+    // Start on the Training tab whatever on/off state the panels were saved with, so the scene matches
+    // the tab highlight (ButtonGroupSelector.startIndex = 0) and SimulationManager's default mode (TRAIN).
+    // Without this, saving the scene with the Evaluation panel open showed both panels at startup.
+    void Start()
+    {
+        if (Panel1 != null && Panel2 != null)
+            TogglePanel1();
+        if (Button1 != null && Button2 != null)
+            ToggleButton1();
+    }
     public void TogglePanel1()
     {
         Panel1.SetActive(true);
