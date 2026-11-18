@@ -31,7 +31,12 @@ namespace Training
 
         public static string Build(TrainingRequest request, string behaviorName, TrainerConfig config)
         {
-            NetworkPreset network = config.PresetNamed(request.NetworkPreset);
+            // When resuming, the checkpoint's network must be matched exactly or ML-Agents starts from random weights.
+            CheckpointNetwork checkpoint = request.Checkpoint != null && request.Checkpoint.IsSet ? request.Checkpoint : null;
+            NetworkPreset network = checkpoint != null
+                ? checkpoint.ToPreset(config.PresetNamed(request.NetworkPreset))
+                : config.PresetNamed(request.NetworkPreset);
+            bool normalize = checkpoint != null ? checkpoint.Normalize : config.NormalizeObservations;
             var yaml = new StringBuilder();
 
             yaml.AppendLine("behaviors:");
@@ -47,7 +52,7 @@ namespace Training
             Line(yaml, 6, "num_epoch", config.NumEpoch);
             Line(yaml, 6, "learning_rate_schedule", "linear");
             yaml.AppendLine("    network_settings:");
-            Line(yaml, 6, "normalize", config.NormalizeObservations ? "true" : "false");
+            Line(yaml, 6, "normalize", normalize ? "true" : "false");
             Line(yaml, 6, "hidden_units", network.HiddenUnits);
             Line(yaml, 6, "num_layers", network.Layers);
             Line(yaml, 6, "vis_encode_type", string.IsNullOrWhiteSpace(network.VisualEncoder) ? "simple" : network.VisualEncoder.Trim());
@@ -60,8 +65,16 @@ namespace Training
             Line(yaml, 4, "max_steps", request.MaxTrainerSteps);
             Line(yaml, 4, "time_horizon", config.TimeHorizon);
             Line(yaml, 4, "summary_freq", config.SummaryFrequency);
+            if (checkpoint != null)
+                Line(yaml, 4, "init_path", SingleQuoted(checkpoint.InitPath));
 
             return yaml.ToString();
+        }
+
+        // YAML single quotes keep Windows backslashes as they are; a quote is written twice.
+        private static string SingleQuoted(string value)
+        {
+            return "'" + (value ?? "").Replace("'", "''") + "'";
         }
 
         private static void Line(StringBuilder yaml, int indent, string key, object value)
