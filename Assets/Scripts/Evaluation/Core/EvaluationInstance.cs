@@ -20,6 +20,8 @@ namespace Evaluation
         public EvaluationRequest Request;
         public ArenaSettings Arena;
         public EpisodeRules Rules;
+        // End an episode as TimedOut when the rover stops making progress (Rules.StallSeconds).
+        public bool EndStalledEpisodes;
         public int Seed;
         // Picked start and goal (Start and Goal: Set on Preview). Null for random spawns and goals.
         public Vector3? FixedStart;
@@ -37,6 +39,8 @@ namespace Evaluation
         private System.Random headingRng;
         private EpisodeMonitor monitor;
         private readonly EpisodeTimer timer = new EpisodeTimer();
+        private readonly SpawnSettle settle = new SpawnSettle();
+        private readonly StallCheck stall = new StallCheck();
 
         private GameObject holder;
         private RoverAIController rover;
@@ -242,6 +246,7 @@ namespace Evaluation
             rockContacts.Clear();
             hitRock = false;
             wheelsOnRock = false;
+            settle.Begin(spawn.position);
             attemptRunning = true;
         }
 
@@ -249,6 +254,22 @@ namespace Evaluation
         {
             if (!attemptRunning || rover == null)
                 return;
+
+            // Skip the timer and the end checks until the chassis reports the spawn pose. Until then it
+            // still has the old pose, which after a tile change is outside the new arena (see SpawnSettle).
+            if (settle.Waiting)
+            {
+                rockContacts.Clear();
+                SpawnSettle.Result result = settle.Step(chassis);
+                if (result == SpawnSettle.Result.Waiting)
+                    return;
+
+                if (result == SpawnSettle.Result.GaveUp)
+                    Debug.LogWarning($"[Evaluation] Rover {Index}: not at its spawn after {SpawnSettle.MaxSteps} physics steps; starting the episode anyway.", this);
+
+                stall.Begin(EpisodeMonitor.HorizontalDistance(chassis.position, layout.Goal));
+                return;
+            }
 
             timer.Advance(Time.fixedDeltaTime);
 
@@ -258,7 +279,18 @@ namespace Evaluation
 
             EpisodeOutcome outcome = monitor.Evaluate(chassis, layout.Goal, Arena, timer);
             if (outcome != EpisodeOutcome.Running)
+            {
                 EndAttempt(outcome);
+                return;
+            }
+
+            // Going nowhere: end it now as a timeout instead of waiting out the clock.
+            if (setup.EndStalledEpisodes && setup.Rules != null &&
+                stall.Step(EpisodeMonitor.HorizontalDistance(chassis.position, layout.Goal), Time.fixedDeltaTime,
+                    setup.Rules.StallSeconds, setup.Rules.StallProgressMeters))
+            {
+                EndAttempt(EpisodeOutcome.TimedOut);
+            }
         }
 
         private void EndAttempt(EpisodeOutcome outcome)

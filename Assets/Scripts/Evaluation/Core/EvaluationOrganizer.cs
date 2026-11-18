@@ -42,10 +42,12 @@ namespace Evaluation
 
         [Header("Used when Match Training is off")]
         [SerializeField] private ArenaSettings arena = new ArenaSettings();
-        [Tooltip("Only the goal radius and tilt limit matter here.")]
+        [Tooltip("Only the goal radius, tilt limit and stall settings matter here.")]
         [SerializeField] private EpisodeRules rules = new EpisodeRules();
 
         [Header("Other")]
+        [Tooltip("End an episode early, as a timeout, when the rover stops getting closer to the goal (the rules' Stall Seconds and Stall Progress Meters). Saves time on long episodes. Off runs every episode to the full time limit, like evaluations before this setting existed.")]
+        [SerializeField] private bool endStalledEpisodes = true;
         [Tooltip("Optional. Used when no model was picked in the UI.")]
         [SerializeField] private ModelAsset fallbackModel;
         [SerializeField] private bool logEpisodes = true;
@@ -406,6 +408,7 @@ namespace Evaluation
                 Request = request,
                 Arena = activeArena,
                 Rules = activeRules,
+                EndStalledEpisodes = endStalledEpisodes,
                 Seed = unchecked(request.Seed * 31 + index + 1),
                 FixedStart = request.RandomPosition ? (Vector3?)null : request.StartPos,
                 FixedGoal = request.RandomPosition ? (Vector3?)null : request.GoalPos

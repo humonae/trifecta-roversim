@@ -24,5 +24,13 @@ namespace Training
         [Min(0f)] public float WheelRockPenaltyPerSecond = 0.02f;
         [Tooltip("Cost per second while the chassis touches a rock.")]
         [Min(0f)] public float ChassisRockPenaltyPerSecond = 0.2f;
+
+        [Header("Stall")]
+        [Tooltip("End an episode when the rover goes this long without getting Stall Progress Meters closer to the goal than its best so far. It's reported as a timeout. In training it's also trained as a failure (Stall Penalty), so parking is no safer than crashing. Evaluation uses it too unless End Stalled Episodes is off on the EvaluationOrganizer. 0 turns it off everywhere.")]
+        [Min(0f)] public float StallSeconds = 20f;
+        [Tooltip("How much closer to the goal than its best so far the rover has to get to reset the stall clock, in meters.")]
+        [Min(0.1f)] public float StallProgressMeters = 1f;
+        [Tooltip("Training only: final reward for a stalled episode. The same as Failure Penalty by default.")]
+        public float StallPenalty = -1f;
     }
 }
