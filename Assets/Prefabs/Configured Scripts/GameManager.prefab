@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2348932033155430899}
   - component: {fileID: 8569853931921863109}
   - component: {fileID: 2079244744573332312}
-  - component: {fileID: 3597745950382115996}
+  - component: {fileID: 8318370707468027264}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -113,7 +113,7 @@ MonoBehaviour:
     GoalClearRadius: 1.5
     PlacementAttempts: 50
   rules:
-    GoalRadius: 1.5
+    GoalRadius: 2.5
     MaxTiltAngle: 70
     GoalReward: 1
     FailurePenalty: -1
@@ -123,6 +123,9 @@ MonoBehaviour:
     ReversePenaltyPerMeter: 0.05
     WheelRockPenaltyPerSecond: 0.02
     ChassisRockPenaltyPerSecond: 0.2
+    StallSeconds: 20
+    StallProgressMeters: 1
+    StallPenalty: -1
   earlyStopping:
     Window: 100
     MinSuccessRate: 0.9
@@ -139,6 +142,7 @@ MonoBehaviour:
     PythonExecutable: 
     VenvFolder: venv
     InstallAutomatically: 1
+    PythonDownloadUrl: https://www.python.org/downloads/release/python-31011/
     MinPythonVersion: 3.10.1
     MaxPythonVersion: 3.10.12
     MlAgentsPackage: mlagents==1.1.0
@@ -174,12 +178,13 @@ MonoBehaviour:
     Epsilon: 0.2
     Lambda: 0.95
     NumEpoch: 3
-    Gamma: 0.99
+    Gamma: 0.995
     NormalizeObservations: 0
     TimeHorizon: 128
     SummaryFrequency: 10000
     CheckpointInterval: 200000
     KeepCheckpoints: 5
+  popup: {fileID: 0}
 --- !u!114 &2348932033155430899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -239,6 +244,10 @@ MonoBehaviour:
     ReversePenaltyPerMeter: 0.05
     WheelRockPenaltyPerSecond: 0.02
     ChassisRockPenaltyPerSecond: 0.2
+    StallSeconds: 20
+    StallProgressMeters: 1
+    StallPenalty: -1
+  endStalledEpisodes: 1
   fallbackModel: {fileID: 0}
   logEpisodes: 1
 --- !u!114 &2079244744573332312
@@ -258,7 +267,7 @@ MonoBehaviour:
   switchToNewRovers: 1
   keysFollowView: 1
   freeCamMover: {fileID: 0}
---- !u!114 &3597745950382115996
+--- !u!114 &8318370707468027264
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -267,37 +276,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 6605497031338955241}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 374a1ac15f3696a40a18c9fa63ee4205, type: 3}
+  m_Script: {fileID: 11500000, guid: 12e2e2b7ca70470399525768ff3a621f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Evaluation.EvaluationOrganizer
+  m_EditorClassIdentifier: Assembly-CSharp::Training.HumanRoverSpawner
+  roverPrefab: {fileID: 5444675609017222369, guid: a09cab21a8902214dafdb15d0a336057, type: 3}
   loadMap: {fileID: 0}
-  rockPlacer: {fileID: 0}
-  roverPrefab: {fileID: 0}
-  simulationManager: {fileID: 0}
-  instancesRoot: {fileID: 0}
-  trainingOrganizer: {fileID: 0}
-  trainingSettings: {fileID: 0}
-  matchTraining: 1
-  arena:
-    Size: 100
-    EdgeMargin: 5
-    MinGoalDistance: 10
-    MaxGoalDistance: 40
-    MaxSlope: 20
-    SpawnGap: 0.1
-    SpawnClearRadius: 2.5
-    GoalClearRadius: 1.5
-    PlacementAttempts: 50
-  rules:
-    GoalRadius: 1.5
-    MaxTiltAngle: 70
-    GoalReward: 1
-    FailurePenalty: -1
-    TimeoutReward: 0
-    ProgressRewardPerMeter: 0.05
-    TimePenaltyPerSecond: 0.01
-    ReversePenaltyPerMeter: 0.05
-    WheelRockPenaltyPerSecond: 0.02
-    ChassisRockPenaltyPerSecond: 0.2
-  fallbackModel: {fileID: 0}
-  logEpisodes: 1
+  training: {fileID: 0}
+  evaluation: {fileID: 0}
+  spawnGap: 0.1
+  maxSlope: 20
+  clearRadius: 2.5
+  searchStep: 4
+  heading: 0
+  removePlacedRovers: 1
