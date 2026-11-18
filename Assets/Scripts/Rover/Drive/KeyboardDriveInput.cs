@@ -28,6 +28,13 @@ namespace Rover
             steer = Mathf.MoveTowards(steer, targetSteer, steerResponse * Time.deltaTime);
         }
 
+        // Disabled (e.g. by CameraSwitcher while the free camera has the keys): stop instead of holding the last command.
+        private void OnDisable()
+        {
+            throttle = 0f;
+            steer = 0f;
+        }
+
         private static float Axis(bool positive, bool negative) => (positive ? 1f : 0f) - (negative ? 1f : 0f);
     }
 }

@@ -23,6 +23,10 @@ namespace Training
         private EpisodeLayout layout;
         private bool hasPendingLayout;
         private bool episodeRunning;
+        // Per episode, for TrainingReport.
+        private bool hitRock;
+        private bool wheelsOnRock;
+        private float startDistance;
 
         public event Action<TrainingInstance, EpisodeOutcome> EpisodeEnded;
 
@@ -32,6 +36,11 @@ namespace Training
         public EpisodeLayout Layout => layout;
         public EpisodeTimer Timer => timer;
         public bool EpisodeRunning => episodeRunning;
+        // The current (or just-ended) episode; read by TrainingOrganizer when EpisodeEnded fires.
+        public bool EpisodeHitRock => hitRock;
+        public bool EpisodeWheelsOnRock => wheelsOnRock;
+        public float EpisodeStartDistance => startDistance;
+        public float EpisodeFinalDistance => chassis != null ? DistanceToGoal() : 0f;
 
         public bool Initialize(InstanceSetup instanceSetup, out string error)
         {
@@ -121,6 +130,9 @@ namespace Training
             timer.Restart(setup.Request.EpisodeSeconds);
             rewards.Begin(DistanceToGoal());
             rockContacts.Clear();
+            hitRock = false;
+            wheelsOnRock = false;
+            startDistance = EpisodeMonitor.HorizontalDistance(layout.Spawn.position, layout.Goal);
             episodeRunning = true;
         }
 
@@ -142,6 +154,8 @@ namespace Training
             float deltaTime = Time.fixedDeltaTime;
             timer.Advance(deltaTime);
             rover.AddReward(rewards.Step(DistanceToGoal(), ForwardSpeed(), rockContacts.WheelsTouching, rockContacts.ChassisTouching, deltaTime));
+            hitRock |= rockContacts.ChassisTouching;
+            wheelsOnRock |= rockContacts.WheelsTouching;
             rockContacts.Clear();
 
             EpisodeOutcome outcome = monitor.Evaluate(chassis, layout.Goal, Arena, timer);

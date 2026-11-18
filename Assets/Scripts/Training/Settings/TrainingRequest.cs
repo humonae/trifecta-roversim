@@ -26,6 +26,12 @@ namespace Training
         public string RunId = "";
         public bool UseFixedSeed;
         public int Seed;
+        [Tooltip("A .pt checkpoint to continue training from. Empty trains a new network.")]
+        public string ResumeFrom = "";
+        [Tooltip("Set once Python has read the checkpoint, before the trainer starts.")]
+        public CheckpointNetwork Checkpoint = new CheckpointNetwork();
+
+        public bool ResumesFromCheckpoint => !string.IsNullOrEmpty(ResumeFrom);
 
         public string ToLogString()
         {

@@ -36,7 +36,8 @@ namespace Training
                 RunName = modelName,
                 RunId = PythonPaths.MakeRunId(modelName),
                 UseFixedSeed = ui.FixedSeed,
-                Seed = defaults.Seed
+                Seed = defaults.Seed,
+                ResumeFrom = string.IsNullOrWhiteSpace(ui.ResumeCheckpointPath) ? "" : PythonPaths.Resolve(ui.ResumeCheckpointPath)
             };
         }
 
