@@ -68,6 +68,30 @@ public class ONNXFilePicker : MonoBehaviour
         }
     }
 
+    public void OpenPTPretrainedPicker() 
+    {
+        // 1. Change the filter to only accept "pt"
+        var extensions = new[] { new ExtensionFilter("PyTorch Model", "pt") };
+        
+        // 2. Update the window title text to match
+        var paths = StandaloneFileBrowser.OpenFilePanel("Select a PyTorch Model", "", extensions, false);
+
+        if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
+        {
+            string modelPath = paths[0];
+            Debug.Log($"Selected PyTorch file: {modelPath}");
+
+            if (selectedFileLabel[mode] != null)
+                selectedFileLabel[mode].text = modelPath;
+
+            OnModelSelected(modelPath);
+        }
+        else
+        {
+            Debug.Log("File selection cancelled.");
+        }
+    }
+
 
     void OnModelSelected(string path)
     {
