@@ -40,9 +40,11 @@ public class TrainingSettings : MonoBehaviour
     public TMP_InputField IterInput;
     public Slider EarlyStopSlider;
     public Slider SuccessSlider;
+    public TMP_Text SuccessText;
     public Slider FixedSeedToggle;
     public Slider EpochToggle;
     public Slider ObstacleDensitySlider;
+    public TMP_Text ObstacleDensityText;
     public TMP_Text Folder;
     public TMP_Text OutputFileText;
 
@@ -99,7 +101,10 @@ public class TrainingSettings : MonoBehaviour
     }
  
     // For a 0 to 1 slider.
-    public void SetSuccessTarget(float value) => SuccessTarget = value;
+    public void SetSuccessTarget(float value){
+        SuccessTarget = value;
+        SuccessText.text = (SuccessTarget * 100f).ToString("0") + "%";
+    }
  
     // For a 0 to 100 slider.
     public void SetSuccessTargetPercent(float percent) => SuccessTarget = percent / 100f;// a decimal?
@@ -115,8 +120,9 @@ public class TrainingSettings : MonoBehaviour
     }
  
     public void SetObstacleDensity(float value)
-    {
+    {       
         ObstacleDensity = value;
+        ObstacleDensityText.text = (ObstacleDensity * 10f).ToString("0") + "%";
         SetRocks();
     } 
  
@@ -156,11 +162,13 @@ public class TrainingSettings : MonoBehaviour
         IterInput.SetTextWithoutNotify(Iterations.ToString());
         EarlyStopSlider.SetValueWithoutNotify(EarlyStopping ? 1f : 0f);
         SuccessSlider.SetValueWithoutNotify(SuccessTarget);
+        SuccessText.text = (SuccessTarget * 100f).ToString("0") + "%";
         FixedSeedToggle.SetValueWithoutNotify(FixedSeed?1:0);
         EpochToggle.SetValueWithoutNotify(NewTileEachEpoch?1:0);
         // FixedSeedToggle.SetIsOnWithoutNotify(FixedSeed);
         // EpochToggle.SetIsOnWithoutNotify(NewTileEachEpoch);
         ObstacleDensitySlider.SetValueWithoutNotify(ObstacleDensity);
+        ObstacleDensityText.text = (ObstacleDensity * 10f).ToString("0") + "%";
         Folder.text = ModelOutputPath;
         OutputFileText.text = ModelName;
     }

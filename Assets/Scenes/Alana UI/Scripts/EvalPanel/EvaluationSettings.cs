@@ -11,10 +11,11 @@ using UnityEngine.UI;
 
 public class EvaluationSettings : MonoBehaviour
 {  
-    public EvaluationDefaults defaults = new EvaluationDefaults();
+    public EvaluationDefaults defaults;
     [Header("UI elements")]
     public TMP_Text ModelText;
     public Slider ObstacleDensitySlider; 
+    public TMP_Text ObstacleDensityText;
     public TMP_InputField NumberEpisodes;
     public TMP_Text StartingSeedText;
 
