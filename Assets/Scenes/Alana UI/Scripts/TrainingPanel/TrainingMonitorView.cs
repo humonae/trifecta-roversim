@@ -33,6 +33,11 @@ namespace Training
         [Tooltip("Which episodes the numbers cover, e.g. \"Recent: last 10% of the run (at least 100)\"")]
         [SerializeField] private TMP_Text windowText;
 
+        [Header("Progress")]
+        [SerializeField] private OutcomeBar progressBar;
+        [SerializeField] private TMP_Text progressLabelText;    // "100 / 200 episodes"
+        [SerializeField] private TMP_Text progressPercentText;  // "50%"
+
         [Header("Status")]
         [Tooltip("The organizer's status line, e.g. \"Starting the Python trainer...\" or \"Training on Jezero_B4: episode 120/1000, success 38%\". " +
                  "Useful on a training panel because starting Python takes a while.")]
@@ -83,6 +88,7 @@ namespace Training
 
         [Header("Learning curve")]
         [SerializeField] private LearningCurve curve;
+        [SerializeField] private LearningCurve rewardCurve;
         [SerializeField] private TMP_Text curveLabel;
 
         private TrainingReport latest;
@@ -120,6 +126,8 @@ namespace Training
             if (tracker != null)
                 tracker.BinHovered += OnBinHovered;
             if (curve != null) curve.PointHovered += OnCurveHovered;
+            if (organizer == null || organizer.Report == null)
+                ShowIdle();
         }
 
         private void OnDisable()
@@ -215,6 +223,8 @@ namespace Training
                 return;
 
             if (curve != null) curve.SetFromReport(r);
+            ShowProgress(r);
+            if (rewardCurve != null) rewardCurve.SetFromReport(r);
 
             // Every stat lives under Recent or Overall.
             var s = window == Window.Recent ? r.Recent : r.Overall;
@@ -284,6 +294,79 @@ namespace Training
 
         private void OnCurveHovered(TrainingReport.Stats s){
             Set(curveLabel, s != null ? curve.Label(s) : "Learning curve");
+        }
+        private void ShowProgress(TrainingReport r)
+        {
+            int done = 0, total = 0;
+            string label = "-";
+
+            if (r.IterationUnit == EpisodesUnit && r.IterationsPlanned > 0)
+            {
+                done = r.Episodes;
+                total = r.IterationsPlanned;
+                label = $"{done:N0} / {total:N0} episodes";
+            }
+            else if (r.IterationUnit == EpochsUnit && r.IterationsPlanned > 0)
+            {
+                done = r.Episodes > 0 ? r.AttemptLog[r.Episodes - 1].Epoch : 0;
+                total = r.IterationsPlanned;
+                label = $"Epoch {done:N0} / {total:N0}";
+            }
+            else if (r.MaxTrainerSteps > 0 && Academy.IsInitialized)
+            {
+                long steps = Academy.Instance.TotalStepCount;
+                long max = r.MaxTrainerSteps;
+                done = (int)System.Math.Min(steps, int.MaxValue);
+                total = (int)System.Math.Min(max, int.MaxValue);
+                label = $"{steps:N0} / {max:N0} steps";
+            }
+
+            bool complete = !string.IsNullOrEmpty(r.FinishedAt) && r.Completed;
+            float fraction = complete ? 1f : (total > 0 ? Mathf.Clamp01(done / (float)total) : 0f);
+
+            if (progressBar != null)
+                progressBar.Set(complete ? 1 : done, complete ? 1 : total);
+
+            Set(progressLabelText, label);
+            Set(progressPercentText, (total > 0 || complete) ? EvaluationReport.Percent(fraction) : "-");
+        }
+
+        private void ShowIdle()
+        {
+            const string dash = "---";
+
+            if (progressBar != null)
+                progressBar.Set(0, 1);
+            Set(progressLabelText, "Not started");
+            Set(progressPercentText, "0%");
+
+            Set(runText, "N/A");
+            Set(detailsText, "Start a run to view metrics");
+            Set(windowText, dash);
+            Set(completionText, dash);
+
+            Set(successText, dash);
+            Set(successDetailText, dash);
+            Set(collisionsText, dash);
+            Set(collisionsDetailText, dash);
+            Set(timeoutsText, dash);
+            Set(timeoutsDetailText, dash);
+            Set(timeToGoalText, dash);
+            Set(avgRewardText, dash);
+
+            Set(hitRockCountText, dash);
+            Set(timedOutCountText, dash);
+
+            Set(changeLabelText, "First Run");
+            Set(changeText, dash);
+
+            if (tracker != null)
+                tracker.ClearEpisodes();
+            Set(trackerLabel, trackerLabelDefault);
+            if (curve != null)
+                curve.Clear();
+            if (rewardCurve != null)
+                rewardCurve.Clear();
         }
     }
 }

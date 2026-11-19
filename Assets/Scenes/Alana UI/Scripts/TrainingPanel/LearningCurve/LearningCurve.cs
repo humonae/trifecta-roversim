@@ -46,6 +46,11 @@ namespace Training
         [SerializeField] private Color rewardLineColor = new Color(0.62f, 0.69f, 0.77f);
         [SerializeField, Range(0.2f, 1f)] private float rewardLineWidthScale = 0.6f;
 
+        [Header("Failure lines")]
+        [Tooltip("Also draw the rock-hit and timeout rates as thinner lines on the same 0-100% axis. Only when the metric is Success Rate.")]
+        [SerializeField] private bool showFailureLines = true;
+        [SerializeField, Range(0.2f, 1f)] private float failureLineWidthScale = 0.6f;
+
         [Header("Hover")]
         [SerializeField] private bool showHoverGuide = true;
         [SerializeField] private Color guideColor = new Color(1f, 1f, 1f, 0.45f);
@@ -65,6 +70,20 @@ namespace Training
         private int hover = -1;
 
         public int PointCount => blocks.Count;
+        /// <summary>Episode at the left end of the x-axis (the end of the first block). 0 when empty.</summary>
+        public int AxisFirstEpisode => blocks.Count > 0 ? blocks[0].LastEpisode : 0;
+        public void GetValueRange(out float min, out float max) => ValueRange(out min, out max);
+
+        /// <summary>Episode at the right end of the x-axis. 0 when empty.</summary>
+        public int AxisLastEpisode
+        {
+            get
+            {
+                if (blocks.Count == 0) return 0;
+                if (expectedPoints > blocks.Count) return expectedPoints * blocks[0].Episodes; // fixed axis
+                return blocks[blocks.Count - 1].LastEpisode;
+            }
+        }
         public CurveMetric Metric => metric;
 
         // --- Feeding data ---------------------------------------------------
@@ -111,9 +130,11 @@ namespace Training
         {
             if (s == null) return "";
             return $"Episodes {s.FirstEpisode}-{s.LastEpisode}: {Evaluation.EvaluationReport.Percent(s.SuccessRate)} success " +
-                   $"(95% CI {Evaluation.EvaluationReport.Percent(s.SuccessRateLow)}-{Evaluation.EvaluationReport.Percent(s.SuccessRateHigh)}), " +
-                   $"avg reward {s.AverageReward.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}, " +
-                   $"{Evaluation.EvaluationReport.Seconds(s.AverageSecondsToGoal)} to goal";
+                $"(95% CI {Evaluation.EvaluationReport.Percent(s.SuccessRateLow)}-{Evaluation.EvaluationReport.Percent(s.SuccessRateHigh)}), " +
+                $"{Evaluation.EvaluationReport.Percent(s.CollisionRate)} rock hits, " +
+                $"{Evaluation.EvaluationReport.Percent(s.TimeoutRate)} timeouts, " +
+                $"avg reward {s.AverageReward.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}, " +
+                $"{Evaluation.EvaluationReport.Seconds(s.AverageSecondsToGoal)} to goal";
         }
 
         /// <summary>Describe(s), plus " (in progress)" when that is the newest, still-filling block.</summary>
@@ -218,6 +239,8 @@ namespace Training
             SetVerticesDirty();
             PointHovered?.Invoke(index >= 0 ? blocks[index] : null);
         }
+
+    
 
         // --- Mesh -----------------------------------------------------------
 
@@ -324,6 +347,26 @@ namespace Training
                 }
             }
 
+            // Rock-hit and timeout rates, thinner, on the same 0-100% axis.
+            if (showFailureLines && metric == CurveMetric.SuccessRate && n > 1)
+            {
+                float fw = lineWidth * failureLineWidthScale;
+                for (int i = 0; i < n - 1; i++)
+                {
+                    float a = (partial && i == n - 2) ? inProgressAlpha : 1f;
+
+                    Color rock = collisionColor;
+                    rock.a *= a;
+                    AddLine(vh, RatePoint(pts[i].x, blocks[i].CollisionRate, bottom, top),
+                                RatePoint(pts[i + 1].x, blocks[i + 1].CollisionRate, bottom, top), fw, Tint(rock));
+
+                    Color time = timeoutColor;
+                    time.a *= a;
+                    AddLine(vh, RatePoint(pts[i].x, blocks[i].TimeoutRate, bottom, top),
+                                RatePoint(pts[i + 1].x, blocks[i + 1].TimeoutRate, bottom, top), fw, Tint(time));
+                }
+            }
+
             // Vertical hover guide.
             if (showHoverGuide && hover >= 0 && hover < n)
                 AddLine(vh, new Vector2(pts[hover].x, bottom), new Vector2(pts[hover].x, top), Mathf.Max(1f, gridWidth), Tint(guideColor));
@@ -378,6 +421,10 @@ namespace Training
             AddQuad(vh, from + n, to + n, to - n, from - n, col);
         }
 
+        private static Vector2 RatePoint(float x, float rate, float bottom, float top)
+        {
+            return new Vector2(x, Mathf.Lerp(bottom, top, Mathf.Clamp01(rate)));
+        }
         private static void AddCircle(VertexHelper vh, Vector2 centre, float radius, Color32 col)
         {
             const int segments = 16;
