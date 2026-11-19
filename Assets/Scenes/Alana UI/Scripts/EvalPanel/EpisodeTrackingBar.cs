@@ -57,6 +57,11 @@ namespace Evaluation
         [SerializeField, Min(0f)] private float gap = 3f;
         [SerializeField, Min(0f)] private float cornerRadius = 3f;
         [SerializeField, Range(2, 16)] private int cornerSegments = 6;
+        [Tooltip("While the run has fewer episodes than Max Columns, keep every column at its final width so the bar fills " +
+                 "from the left, instead of one episode stretching across the whole bar.")]
+        [SerializeField] private bool reserveSlots = true;
+        [Tooltip("Color of the empty slots still to be filled. Set its alpha to 0 to hide them.")]
+        [SerializeField] private Color emptySlotColor = new Color(1f, 1f, 1f, 0.08f);
 
         [Header("Colors (match your legend)")]
         [SerializeField] private Color successColor = new Color(0.72f, 0.96f, 0.55f);
@@ -76,6 +81,10 @@ namespace Evaluation
         public int EpisodeCount => episodes.Count;
         public int BinSize => Mathf.Max(1, Mathf.CeilToInt(episodes.Count / (float)maxColumns));
         public int BinCount => episodes.Count == 0 ? 0 : Mathf.CeilToInt(episodes.Count / (float)BinSize);
+
+        // How many column positions the width is divided into. While every episode still gets its own
+        // column, that is Max Columns, so columns keep their final width as the run grows.
+        private int SlotCount => reserveSlots && BinSize == 1 ? maxColumns : BinCount;
 
         // --- Feeding data ---------------------------------------------------
 
@@ -110,6 +119,39 @@ namespace Evaluation
             SetVerticesDirty();
         }
 
+        private static readonly string FlippedName = EpisodeOutcome.Flipped.ToString();
+        private static readonly string OutOfBoundsName = EpisodeOutcome.OutOfBounds.ToString();
+
+        /// <summary>The same mapping as Classify(AttemptResult), for a training episode.</summary>
+        public static BarOutcome Classify(TrainingAttempt attempt)
+        {
+            if (attempt.Success) return BarOutcome.Success;
+            if (attempt.Outcome == FlippedName) return BarOutcome.Flipped;
+            if (attempt.Outcome == OutOfBoundsName) return BarOutcome.OutOfBounds;
+            return BarOutcome.TimedOut;
+        }
+
+        /// <summary>Rebuilds the whole bar from a training report.</summary>
+        public void SetFromReport(TrainingReport report)
+        {
+            episodes.Clear();
+            if (report != null)
+            {
+                foreach (TrainingAttempt attempt in report.AttemptLog)
+                    episodes.Add(Classify(attempt));
+            }
+
+            if (hoverBin >= BinCount) hoverBin = -1;
+            SetVerticesDirty();
+        }
+
+        /// <summary>Appends one training episode. Cheap, so use it for each finished episode instead of rebuilding.</summary>
+        public void AddAttempt(TrainingAttempt attempt)
+        {
+            episodes.Add(Classify(attempt));
+            SetVerticesDirty();
+        }
+
         /// <summary>Appends one attempt. Skipped attempts are ignored.</summary>
         public void AddAttempt(AttemptResult attempt)
         {
@@ -122,6 +164,22 @@ namespace Evaluation
         {
             episodes.Clear();
             hoverBin = -1;
+            SetVerticesDirty();
+        }
+
+        /// <summary>Appends one outcome directly. Used by EpisodeTrackingBarTester; real runs use SetFromReport.</summary>
+        public void AddOutcome(BarOutcome outcome)
+        {
+            episodes.Add(outcome);
+            SetVerticesDirty();
+        }
+
+        /// <summary>Replaces everything with these outcomes. Used by EpisodeTrackingBarTester; real runs use SetFromReport.</summary>
+        public void SetOutcomes(IEnumerable<BarOutcome> outcomes)
+        {
+            episodes.Clear();
+            episodes.AddRange(outcomes);
+            if (hoverBin >= BinCount) hoverBin = -1;
             SetVerticesDirty();
         }
 
@@ -170,7 +228,7 @@ namespace Evaluation
             }
 
             Rect r = GetPixelAdjustedRect();
-            float colW = ColumnWidth(r.width, binCount);
+            float colW = ColumnWidth(r.width, SlotCount);
             if (colW <= 0f)
             {
                 SetHoverBin(-1);
@@ -205,9 +263,10 @@ namespace Evaluation
 
             Rect r = GetPixelAdjustedRect();
             int binCount = BinCount;
-            if (binCount == 0 || r.width <= 0f || r.height <= 0f) return;
+            int slotCount = SlotCount;
+            if (slotCount == 0 || r.width <= 0f || r.height <= 0f) return;
 
-            float colW = ColumnWidth(r.width, binCount);
+            float colW = ColumnWidth(r.width, slotCount);
             if (colW <= 0f) return;
 
             int binSize = BinSize;
@@ -257,6 +316,14 @@ namespace Evaluation
                     AddRoundedRect(vh, x, y, colW, h, bottomR, bottomR, topR, topR, c);
                     y += h;
                 }
+            }
+
+            // Empty slots show the bar's capacity, so a short run reads as "a few out of many".
+            if (emptySlotColor.a > 0f)
+            {
+                Color empty = emptySlotColor * color;
+                for (int b = binCount; b < slotCount; b++)
+                    AddRoundedRect(vh, r.xMin + b * (colW + gap), r.yMin, colW, r.height, radius, radius, radius, radius, empty);
             }
         }
 

@@ -6,7 +6,10 @@ public class PanelBehavior : MonoBehaviour
     //toggle between 2 panels
     //public State simMode;
     public GameObject Panel1;
+    public GameObject Panel1Monitor;
+    
     public GameObject Panel2;
+    public GameObject Panel2Monitor;
 
     public GameObject Button1;
     public GameObject Button2;
@@ -26,13 +29,19 @@ public class PanelBehavior : MonoBehaviour
     public void TogglePanel1()
     {
         Panel1.SetActive(true);
+        Panel1Monitor.SetActive(true);
+
         Panel2.SetActive(false);
+        Panel2Monitor.SetActive(false);
     }
 
     public void TogglePanel2()
     {
         Panel2.SetActive(true);
+        Panel2Monitor.SetActive(true);
+        
         Panel1.SetActive(false);
+        Panel1Monitor.SetActive(false);
     }
 
 

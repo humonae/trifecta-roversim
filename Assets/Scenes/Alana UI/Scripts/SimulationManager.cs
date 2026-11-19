@@ -6,7 +6,6 @@ using UnityEngine.AI;
 /*
 Simulation manager stores variables and initializes each new run, calls functions from the required scripts and manages states
 in progress
-variables keep changing unforch
 */
 
 // this is the data container, contains the parameter settings

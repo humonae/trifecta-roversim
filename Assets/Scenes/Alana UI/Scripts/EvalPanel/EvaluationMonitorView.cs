@@ -19,6 +19,11 @@ namespace Evaluation
         [Tooltip("\"checkpointName - selection - # episodes - seed #####\"")]
         [SerializeField] private TMP_Text detailsText;
 
+        [Header("Progress")]
+        [SerializeField] private OutcomeBar progressBar;
+        [SerializeField] private TMP_Text progressLabelText;    // "100 / 200 episodes"
+        [SerializeField] private TMP_Text progressPercentText;  // "50%"
+
         [Header("Success tile")]
         [SerializeField] private TMP_Text successText;
         [Tooltip("\"95% CI 42%-69%\"")]
@@ -78,6 +83,9 @@ namespace Evaluation
 
             if (tracker != null)
                 tracker.BinHovered += OnBinHovered;
+
+            if (organizer == null || organizer.Report == null)
+            ShowIdle();
         }
 
         private void OnDisable()
@@ -109,6 +117,14 @@ namespace Evaluation
         {
             if (r == null)
                 return;
+
+            int done = r.Episodes + r.Skipped;
+            if (progressBar != null)
+                progressBar.Set(done, r.EpisodesPlanned);
+            Set(progressLabelText, $"{done:N0} / {r.EpisodesPlanned:N0} episodes");
+            Set(progressPercentText, r.EpisodesPlanned > 0
+                ? EvaluationReport.Percent(Mathf.Clamp01(done / (float)r.EpisodesPlanned))
+                : "-");
 
             bool any = r.Episodes > 0;
 
@@ -142,6 +158,37 @@ namespace Evaluation
         {
             if (text != null)
                 text.text = value;
+        }
+
+        private void ShowIdle()
+        {
+            const string dash = "---";
+
+            if (progressBar != null)
+                progressBar.Set(0, 1);
+            Set(progressLabelText, "Not started");
+            Set(progressPercentText, "0%");
+
+            Set(runText, "N/A");
+            Set(detailsText, "Start a run to view metrics");
+
+            Set(successText, dash);
+            Set(successDetailText, dash);
+            Set(collisionsText, dash);
+            Set(collisionsDetailText, dash);
+            Set(timeoutsText, dash);
+            Set(timeoutsDetailText, dash);
+            Set(timeToGoalText, dash);
+
+            Set(hitRockCountText, dash);
+            Set(timedOutCountText, dash);
+
+            Set(changeLabelText, "First Run");
+            Set(changeText, dash);
+
+            if (tracker != null)
+                tracker.ClearEpisodes();
+            Set(trackerLabel, trackerLabelDefault);
         }
     }
 }
