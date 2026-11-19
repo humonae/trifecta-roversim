@@ -36,7 +36,7 @@ namespace Training
         [SerializeField] private PythonSetupSettings python = new PythonSetupSettings();
         [SerializeField] private TrainerLaunchSettings trainer = new TrainerLaunchSettings();
         [SerializeField] private TrainerConfig trainerConfig = new TrainerConfig();
-        [Tooltip("Optional. Shows the Python setup questions and errors. Found or created automatically; add a PopupDialog to the scene to style it.")]
+        [Tooltip("Optional. Shows the \"Starting training\" popup and the Python setup questions and errors. Found or created automatically; add a PopupDialog to the scene to style it.")]
         [SerializeField] private PopupDialog popup;
 
         private readonly List<TrainingInstance> instances = new List<TrainingInstance>();
@@ -162,6 +162,7 @@ namespace Training
             Application.runInBackground = true;
 
             SetState(TrainingState.SettingUpPython, "Checking Python...");
+            ShowStartingPopup();
             setupRoutine = StartCoroutine(SetUpPythonAndLaunch());
             return true;
         }
@@ -229,6 +230,27 @@ namespace Training
 
         private PopupDialog Popup => popup != null ? popup : (popup = PopupDialog.FindOrCreate());
 
+        // "Starting training." with cycling dots, from Run Training until the trainer takes its first step,
+        // so the wait for Python doesn't look like a freeze. The popup covers the screen, so it has its own Cancel.
+        private void ShowStartingPopup()
+        {
+            Popup.ShowWaiting("Starting training", StartingDetail, new PopupButton("Cancel", Stop));
+        }
+
+        // Only hides the popup if it's still the "Starting training" one, not a Python error shown in its place.
+        private void HideStartingPopup()
+        {
+            if (popup != null && popup.ShowsWaiting)
+                popup.Hide();
+        }
+
+        // The current step under the title. Its own trailing "..." is dropped so it doesn't clash with the title's dots.
+        private string StartingDetail()
+        {
+            string step = State == TrainingState.Running ? "Waiting for the trainer's first step" : Status;
+            return string.IsNullOrEmpty(step) ? "" : step.TrimEnd('.', ' ');
+        }
+
         private IEnumerator SetUpPythonAndLaunch()
         {
             yield return pythonEnvironment.Check(python);
@@ -261,7 +283,7 @@ namespace Training
 
                     installFailed = !pythonEnvironment.IsReady;
                     if (pythonEnvironment.IsReady)
-                        Popup.Hide();
+                        ShowStartingPopup();
                 }
 
                 if (!pythonEnvironment.IsReady)
@@ -325,6 +347,9 @@ namespace Training
 
                 case TrainingState.Running:
                     ApplySpeedOnceTrainerStarted();
+                    // The trainer has taken its first step, so loading is over.
+                    if (speedApplied)
+                        HideStartingPopup();
                     CheckRunEnded();
                     break;
 
@@ -584,7 +609,9 @@ namespace Training
         // Final numbers, saved to TrainingHistory.Folder and the run's results folder, then Finished.
         private void FinishReport(string modelPath)
         {
-            if (report == null || report.AttemptLog.Count == 0)
+            // report is only replaced once a run actually starts (BeginRun). Stopping during startup would
+            // otherwise re-finish and re-save the previous run's report with this stop's reason and times.
+            if (report == null || report.RunId != request.RunId || report.AttemptLog.Count == 0)
                 return;
 
             report.Finish(stopCompleted && !stopIsError, stopIsError, stopReason, DateTime.Now, runEndTime - runStartTime,
@@ -750,6 +777,9 @@ namespace Training
             if (State != state)
             {
                 State = state;
+                // Stopped, cancelled or failed before the first step: drop the "Starting training" popup.
+                if (state == TrainingState.Idle || state == TrainingState.Stopping || state == TrainingState.Paused)
+                    HideStartingPopup();
                 if (StateChanged != null)
                     StateChanged.Invoke(state);
             }

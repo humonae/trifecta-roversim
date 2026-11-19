@@ -83,8 +83,16 @@ public class EvaluationSettings : MonoBehaviour
     public void SetObstacleDensity(float value)
     {
         ObstacleDensity = value;
+        UpdateObstacleDensityText();
         SetRocks();
-    } 
+    }
+
+    // Shows the slider value as a percentage, matching the training panel (slider 0-10 -> 0-100%).
+    private void UpdateObstacleDensityText()
+    {
+        if (ObstacleDensityText != null)
+            ObstacleDensityText.text = (ObstacleDensity * 10f).ToString("0") + "%";
+    }
  
     private void SetRocks()
     {
@@ -105,6 +113,7 @@ public class EvaluationSettings : MonoBehaviour
         SetRocks();
         ModelText.text = string.IsNullOrEmpty(ModelName) ? "None" : ModelName;
         ObstacleDensitySlider.SetValueWithoutNotify(ObstacleDensity);
+        UpdateObstacleDensityText();
         NumberEpisodes.SetTextWithoutNotify(EpisodeCount.ToString());
         SetSeed();
         // StartingSeedText.text = StartingSeed.ToString();
