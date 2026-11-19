@@ -28,7 +28,7 @@ namespace Training
         [SerializeField, Min(0f)] private float pointRadius = 3.5f;
         [SerializeField, Min(0f)] private float gridWidth = 1f;
         [Tooltip("Reserve room for this many points so the curve fills in from the left instead of stretching. " +
-                 "0 = spread whatever points exist across the full width. Use SetExpectedPoints(planned episodes / block size).")]
+                 "0 = the axis ends at the newest point, which is always at the right edge (how real runs show).")]
         [SerializeField, Min(0)] private int expectedPoints = 0;
 
         [Header("Look")]
@@ -36,6 +36,8 @@ namespace Training
         [SerializeField] private bool showConfidenceBand = true;
         [SerializeField, Range(0f, 1f)] private float areaAlpha = 0.18f;
         [SerializeField, Range(0f, 1f)] private float bandAlpha = 0.22f;
+        [Tooltip("Hide the dots when points are closer together than this many dot widths (the hovered and newest stay).")]
+        [SerializeField, Min(0f)] private float minDotSpacing = 2.5f;
         [SerializeField] private Color gridColor = new Color(1f, 1f, 1f, 0.12f);
         [Tooltip("The newest block is lighter while it is still filling up.")]
         [SerializeField, Range(0f, 1f)] private float inProgressAlpha = 0.5f;
@@ -70,18 +72,19 @@ namespace Training
         private int hover = -1;
 
         public int PointCount => blocks.Count;
-        /// <summary>Episode at the left end of the x-axis (the end of the first block). 0 when empty.</summary>
+        /// <summary>Episode at the left end of the x-axis: the first point's (the end of the first block). 0 when empty.</summary>
         public int AxisFirstEpisode => blocks.Count > 0 ? blocks[0].LastEpisode : 0;
         public void GetValueRange(out float min, out float max) => ValueRange(out min, out max);
 
-        /// <summary>Episode at the right end of the x-axis. 0 when empty.</summary>
+        /// <summary>Episode at the right end of the x-axis: the newest episode, so the scale grows with the run. 0 when empty.</summary>
         public int AxisLastEpisode
         {
             get
             {
                 if (blocks.Count == 0) return 0;
-                if (expectedPoints > blocks.Count) return expectedPoints * blocks[0].Episodes; // fixed axis
-                return blocks[blocks.Count - 1].LastEpisode;
+                int latest = blocks[blocks.Count - 1].LastEpisode;
+                if (expectedPoints > blocks.Count) return Mathf.Max(expectedPoints * blocks[0].Episodes, latest); // fixed axis (tester only)
+                return latest;
             }
         }
         public CurveMetric Metric => metric;
@@ -218,16 +221,31 @@ namespace Training
 
             Rect r = GetPixelAdjustedRect();
             float left = r.xMin + padding;
-            float width = r.width - 2f * padding;
-            int slots = Mathf.Max(expectedPoints, blocks.Count);
-            if (width <= 0f)
+            float right = r.xMax - padding;
+            if (right <= left)
             {
                 SetHover(-1);
                 return;
             }
 
-            int index = slots <= 1 ? 0 : Mathf.RoundToInt((local.x - left) / width * (slots - 1));
-            SetHover(index >= 0 && index < blocks.Count ? index : -1);
+            // Nearest point, but only within its own column (see ColumnEdges), so empty
+            // parts of the axis (the rest of a run still in progress) don't hover anything.
+            int index = -1;
+            float best = float.MaxValue;
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                float d = Mathf.Abs(PointX(i, left, right) - local.x);
+                if (d < best) { best = d; index = i; }
+            }
+
+            if (index >= 0)
+            {
+                float x0, x1;
+                ColumnEdges(index, left, right, out x0, out x1);
+                if (local.x < x0 || local.x > x1) index = -1;
+            }
+
+            SetHover(index);
         }
 
         public void OnPointerExit(PointerEventData eventData) => SetHover(-1);
@@ -241,6 +259,33 @@ namespace Training
         }
 
     
+
+        // --- Positions ------------------------------------------------------
+
+        // Points sit at their block's last episode on an axis from the first point (left edge) to the newest
+        // point (right edge), so the curve always spans the full width. A lone first point sits at the left.
+        private float PointX(int i, float left, float right)
+        {
+            int first = AxisFirstEpisode;
+            int span = AxisLastEpisode - first;
+            if (span <= 0) return left;
+            return Mathf.Lerp(left, right, (blocks[i].LastEpisode - first) / (float)span);
+        }
+
+        // The hover column around point i: halfway to each neighbour. The end points use the gap to
+        // their one neighbour on the open side too; a lone point gets a narrow column.
+        private const float LoneColumnHalfWidth = 12f;
+
+        private void ColumnEdges(int i, float left, float right, out float x0, out float x1)
+        {
+            float x = PointX(i, left, right);
+            float gapBefore = i > 0 ? x - PointX(i - 1, left, right) : -1f;
+            float gapAfter = i < blocks.Count - 1 ? PointX(i + 1, left, right) - x : -1f;
+            float halfBefore = gapBefore > 0f ? gapBefore * 0.5f : gapAfter > 0f ? gapAfter * 0.5f : LoneColumnHalfWidth;
+            float halfAfter = gapAfter > 0f ? gapAfter * 0.5f : gapBefore > 0f ? gapBefore * 0.5f : LoneColumnHalfWidth;
+            x0 = Mathf.Max(left, x - halfBefore);
+            x1 = Mathf.Min(right, x + halfAfter);
+        }
 
         // --- Mesh -----------------------------------------------------------
 
@@ -279,13 +324,11 @@ namespace Training
             int n = blocks.Count;
             if (n == 0) return;
 
-            int slots = Mathf.Max(expectedPoints, n);
             var pts = new Vector2[n];
             for (int i = 0; i < n; i++)
             {
-                float t = slots <= 1 ? 0.5f : i / (float)(slots - 1);
                 float v = Mathf.InverseLerp(min, max, ValueOf(blocks[i]));
-                pts[i] = new Vector2(Mathf.Lerp(left, right, t), Mathf.Lerp(bottom, top, v));
+                pts[i] = new Vector2(PointX(i, left, right), Mathf.Lerp(bottom, top, v));
             }
 
             bool partial = IsInProgress(n - 1);
@@ -294,15 +337,16 @@ namespace Training
             // Highlighted column behind the hovered point.
             if (showHoverGuide && hover >= 0 && hover < n)
             {
-                float step = slots <= 1 ? right - left : (right - left) / (slots - 1);
-                float x0 = Mathf.Max(r.xMin, pts[hover].x - step * 0.5f);
-                float x1 = Mathf.Min(r.xMax, pts[hover].x + step * 0.5f);
+                float x0, x1;
+                ColumnEdges(hover, left, right, out x0, out x1);
                 AddQuad(vh, new Vector2(x0, bottom), new Vector2(x1, bottom), new Vector2(x1, top), new Vector2(x0, top), Tint(columnColor));
             }
 
             // 95% confidence band (success rate only).
             if (showConfidenceBand && metric == CurveMetric.SuccessRate && n > 1)
             {
+                // Drawn everywhere. At the start of a run the points cover only a few episodes, so the band is
+                // wide there: that is the real uncertainty, and it narrows as the rolling window fills up.
                 Color band = line;
                 band.a = bandAlpha;
                 for (int i = 0; i < n - 1; i++)
@@ -367,6 +411,19 @@ namespace Training
                 }
             }
 
+            // A single point has no lines yet: mark the failure rates and reward with small dots instead.
+            if (n == 1)
+            {
+                float small = Mathf.Max(pointRadius, lineWidth * 0.5f) * 0.7f;
+                if (showFailureLines && metric == CurveMetric.SuccessRate)
+                {
+                    AddCircle(vh, RatePoint(pts[0].x, blocks[0].CollisionRate, bottom, top), small, Tint(collisionColor));
+                    AddCircle(vh, RatePoint(pts[0].x, blocks[0].TimeoutRate, bottom, top), small, Tint(timeoutColor));
+                }
+                if (showRewardLine && metric != CurveMetric.AverageReward)
+                    AddCircle(vh, new Vector2(pts[0].x, Mathf.Lerp(bottom, top, 0.5f)), small, Tint(rewardLineColor));
+            }
+
             // Vertical hover guide.
             if (showHoverGuide && hover >= 0 && hover < n)
                 AddVerticalHairline(vh, pts[hover].x, bottom, top, Mathf.Max(1f, gridWidth), Tint(guideColor));
@@ -380,9 +437,14 @@ namespace Training
             }
 
             // Points. Their radius is at least half the line width so the joints stay round.
+            // With many points close together the dots would merge into a thick smear, so they are
+            // left off then (the line still shows every point), apart from the hovered and newest ones.
             float radius = Mathf.Max(pointRadius, lineWidth * 0.5f);
+            float spacing = n > 1 ? (pts[n - 1].x - pts[0].x) / (n - 1) : float.MaxValue;
+            bool dots = spacing >= radius * 2f * minDotSpacing;
             for (int i = 0; i < n; i++)
             {
+                if (!dots && i != hover && i != n - 1) continue;
                 Color c = line;
                 if (partial && i == n - 1) c.a *= inProgressAlpha;
                 AddCircle(vh, pts[i], radius, Tint(c));

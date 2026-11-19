@@ -101,8 +101,14 @@ namespace Training
                 xLabels[2].text = last.ToString("N0");
             }
 
-            foreach (TMP_Text label in xLabels)
-                if (label != null) label.gameObject.SetActive(xOn);
+            // With one point (or two adjacent episodes) the middle and right labels would just repeat the left one.
+            int span = last - first;
+            for (int i = 0; i < xLabels.Length; i++)
+            {
+                if (xLabels[i] == null) continue;
+                bool show = xOn && (i == 0 || (i == 1 ? span >= 2 : span >= 1));
+                xLabels[i].gameObject.SetActive(show);
+            }
             if (title != null)
                 title.gameObject.SetActive(xOn);
         }

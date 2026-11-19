@@ -1606,6 +1606,7 @@ MonoBehaviour:
   showConfidenceBand: 1
   areaAlpha: 0.18
   bandAlpha: 0.22
+  minDotSpacing: 2.5
   gridColor: {r: 1, g: 1, b: 1, a: 0.12}
   inProgressAlpha: 0.5
   showRewardLine: 1
@@ -1646,6 +1647,11 @@ MonoBehaviour:
   hoverLabel: {fileID: 264437162}
   whenGameStarts: 0
   metric: 0
+  source: 0
+  episodes: 450
+  maxProgressPoints: 20
+  progressWindow: 20
+  episodesPerTick: 3
   blocks: 20
   blockSize: 50
   successAtStart: 0.15
@@ -1656,6 +1662,10 @@ MonoBehaviour:
   collisionShareEnd: 0.2
   timeoutShareStart: 0.3
   timeoutShareEnd: 0.6
+  learnAt: 0.4
+  learnSharpness: 8
+  skillWander: 0.05
+  episodeSeconds: 120
   liveInterval: 0.4
 --- !u!114 &41170831
 MonoBehaviour:
@@ -16415,7 +16425,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1783464937}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.8926821
+  m_Size: 0.89268214
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -32938,6 +32948,11 @@ MonoBehaviour:
   hoverLabel: {fileID: 686790350}
   whenGameStarts: 0
   metric: 3
+  source: 0
+  episodes: 450
+  maxProgressPoints: 20
+  progressWindow: 20
+  episodesPerTick: 3
   blocks: 20
   blockSize: 50
   successAtStart: 0.15
@@ -32948,6 +32963,10 @@ MonoBehaviour:
   collisionShareEnd: 0.2
   timeoutShareStart: 0.3
   timeoutShareEnd: 0.6
+  learnAt: 0.4
+  learnSharpness: 8
+  skillWander: 0.05
+  episodeSeconds: 120
   liveInterval: 0.4
 --- !u!222 &1290850407
 CanvasRenderer:
@@ -32987,6 +33006,7 @@ MonoBehaviour:
   showConfidenceBand: 1
   areaAlpha: 0.18
   bandAlpha: 0.22
+  minDotSpacing: 2.5
   gridColor: {r: 1, g: 1, b: 1, a: 0.12}
   inProgressAlpha: 0.5
   showRewardLine: 1
@@ -73601,7 +73621,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 6.3631897}
+  m_AnchoredPosition: {x: 0, y: 6.363159}
   m_SizeDelta: {x: 0, y: 12.726}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &7447868551646408614

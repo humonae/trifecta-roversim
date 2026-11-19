@@ -12,7 +12,9 @@ namespace Training
     //  - Overall:  every episode so far;
     //  - Recent:   the latest episodes (TrainingReportSettings: the last N, or the last N% of the run),
     //              so "recent vs overall" shows how the model is learning;
-    //  - Progress: the run in blocks of ProgressBlockSize episodes (the learning curve).
+    //  - Progress: the learning curve. One point per episode until there are more than
+    //              TrainingReportSettings.MaxProgressPoints; then one every 2, 4, 8 ... episodes.
+    //              Each point covers the last ProgressWindow episodes up to it (a rolling window).
     // The comparison with the previous training run uses the recent success rate.
     // Rates are 0-1. Times are -1 when there is nothing to average (JSON has no NaN).
     [Serializable]
@@ -177,10 +179,16 @@ namespace Training
             Recent = Compute(count - Settings.RecentCount(count), count);
             SuccessChangePoints = previous != null ? (Recent.SuccessRate - previous.Recent.SuccessRate) * 100f : 0f;
 
-            int block = Math.Max(1, Settings.ProgressBlockSize);
+            // A point every `block` episodes; each one covers the `window` episodes ending at it
+            // (fewer at the start of the run). Compute clamps the start to episode 1.
+            int block = Settings.ProgressBlockSize(count);
+            int window = Settings.ProgressWindowFor(block);
             Progress.Clear();
             for (int start = 0; start < count; start += block)
-                Progress.Add(Compute(start, Math.Min(count, start + block)));
+            {
+                int end = Math.Min(count, start + block);
+                Progress.Add(Compute(end - window, end));
+            }
 
             Tiles = ComputeTiles();
         }
@@ -328,7 +336,8 @@ namespace Training
                 RecentEpisodes = s.RecentEpisodes,
                 RecentPercent = s.RecentPercent,
                 RecentMinimum = s.RecentMinimum,
-                ProgressBlockSize = s.ProgressBlockSize,
+                MaxProgressPoints = s.MaxProgressPoints,
+                ProgressWindow = s.ProgressWindow,
                 AutosaveEveryEpisodes = s.AutosaveEveryEpisodes
             };
         }
