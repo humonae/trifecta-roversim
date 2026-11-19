@@ -362,7 +362,7 @@ namespace Training
 
             if (tracker != null)
                 tracker.ClearEpisodes();
-            Set(trackerLabel, trackerLabelDefault);
+            Set(trackerLabel, dash);
             if (curve != null)
                 curve.Clear();
             if (rewardCurve != null)

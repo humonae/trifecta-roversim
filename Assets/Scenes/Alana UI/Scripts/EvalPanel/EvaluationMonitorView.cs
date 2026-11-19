@@ -188,7 +188,7 @@ namespace Evaluation
 
             if (tracker != null)
                 tracker.ClearEpisodes();
-            Set(trackerLabel, trackerLabelDefault);
+            Set(trackerLabel, dash);
         }
     }
 }
