@@ -264,7 +264,7 @@ namespace Training
                 for (int k = 0; k <= 4; k++)
                 {
                     float y = Mathf.Lerp(bottom, top, k / 4f);
-                    AddLine(vh, new Vector2(left, y), new Vector2(right, y), gridWidth, Tint(gridColor));
+                    AddHorizontalHairline(vh, left, right, y, gridWidth, Tint(gridColor));
                 }
 
                 if (metric == CurveMetric.AverageReward && min < 0f && max > 0f)
@@ -272,7 +272,7 @@ namespace Training
                     float y = Mathf.Lerp(bottom, top, Mathf.InverseLerp(min, max, 0f));
                     Color zero = gridColor;
                     zero.a = Mathf.Min(1f, gridColor.a * 2.5f);
-                    AddLine(vh, new Vector2(left, y), new Vector2(right, y), gridWidth, Tint(zero));
+                    AddHorizontalHairline(vh, left, right, y, gridWidth, Tint(zero));
                 }
             }
 
@@ -369,7 +369,7 @@ namespace Training
 
             // Vertical hover guide.
             if (showHoverGuide && hover >= 0 && hover < n)
-                AddLine(vh, new Vector2(pts[hover].x, bottom), new Vector2(pts[hover].x, top), Mathf.Max(1f, gridWidth), Tint(guideColor));
+                AddVerticalHairline(vh, pts[hover].x, bottom, top, Mathf.Max(1f, gridWidth), Tint(guideColor));
 
             // Main line.
             for (int i = 0; i < n - 1; i++)
@@ -419,6 +419,100 @@ namespace Training
             dir.Normalize();
             Vector2 n = new Vector2(-dir.y, dir.x) * (width * 0.5f);
             AddQuad(vh, from + n, to + n, to - n, from - n, col);
+        }
+
+        // --- Pixel snapping for hairlines ------------------------------------
+        // The canvas scales with screen height, so 1 canvas unit is rarely a whole number of screen pixels
+        // (e.g. 1.27 px at 1369 px tall). A 1-unit line then straddles two pixel rows and renders 1 or 2 px
+        // thick depending on where it lands. Gridlines and the hover guide are snapped so each one covers a
+        // whole number of pixels, starting on a pixel edge. The data lines are diagonal and left as they are.
+
+        // The camera the root canvas renders through; null for Screen Space - Overlay.
+        // Returns false for World Space canvases, which have no fixed pixel grid to snap to.
+        private bool TryGetScreenCamera(out Camera cam)
+        {
+            cam = null;
+            Canvas root = canvas != null ? canvas.rootCanvas : null;
+            if (root == null || root.renderMode == RenderMode.WorldSpace) return false;
+            if (root.renderMode == RenderMode.ScreenSpaceCamera) cam = root.worldCamera;
+            return true;
+        }
+
+        private Vector2 LocalToScreen(Vector2 local, Camera cam) =>
+            RectTransformUtility.WorldToScreenPoint(cam, rectTransform.TransformPoint(local));
+
+        // Screen pixels per local unit along one axis (0 = x, 1 = y).
+        private float PixelsPerUnit(int axis, Camera cam)
+        {
+            Vector2 a = LocalToScreen(Vector2.zero, cam);
+            Vector2 b = LocalToScreen(axis == 0 ? Vector2.right : Vector2.up, cam);
+            return Mathf.Abs(axis == 0 ? b.x - a.x : b.y - a.y);
+        }
+
+        // Moves a local coordinate along one axis onto the nearest pixel edge.
+        private float SnapToPixelEdge(Vector2 local, int axis, Camera cam)
+        {
+            Vector2 screen = LocalToScreen(local, cam);
+            screen[axis] = Mathf.Round(screen[axis]);
+            return RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, screen, cam, out Vector2 snapped)
+                ? snapped[axis]
+                : local[axis];
+        }
+
+        // A line along `axis` (0 = horizontal, 1 = vertical) at `across` on the other axis, from `from` to `to`.
+        private void AddHairline(VertexHelper vh, int axis, float from, float to, float across, float width, Color32 col)
+        {
+            int other = 1 - axis;
+            Vector2 Point(float along, float acrossValue)
+            {
+                Vector2 p = default;
+                p[axis] = along;
+                p[other] = acrossValue;
+                return p;
+            }
+
+            if (!TryGetScreenCamera(out Camera cam))
+            {
+                AddLine(vh, Point(from, across), Point(to, across), width, col);
+                return;
+            }
+
+            float ppu = PixelsPerUnit(other, cam);
+            if (ppu <= 0f)
+            {
+                AddLine(vh, Point(from, across), Point(to, across), width, col);
+                return;
+            }
+
+            int pixels = Mathf.Max(1, Mathf.RoundToInt(width * ppu));
+            float thickness = pixels / ppu;
+            float start = SnapToPixelEdge(Point(from, across - thickness * 0.5f), other, cam);
+            float end = start + thickness;
+            AddQuad(vh, Point(from, start), Point(to, start), Point(to, end), Point(from, end), col);
+        }
+
+        private void AddHorizontalHairline(VertexHelper vh, float left, float right, float y, float width, Color32 col) =>
+            AddHairline(vh, 0, left, right, y, width, col);
+
+        private void AddVerticalHairline(VertexHelper vh, float x, float bottom, float top, float width, Color32 col) =>
+            AddHairline(vh, 1, bottom, top, x, width, col);
+
+        // The snapping depends on where the graph sits on screen, not only on its size, so rebuild the mesh
+        // when it moves by a fraction of a pixel or the canvas scale changes (e.g. the window is resized).
+        private Vector2 lastScreenOrigin = new Vector2(float.NaN, float.NaN);
+        private float lastPixelsPerUnit = float.NaN;
+
+        private void LateUpdate()
+        {
+            if (!TryGetScreenCamera(out Camera cam)) return;
+            Vector2 origin = LocalToScreen(Vector2.zero, cam);
+            float ppu = PixelsPerUnit(1, cam);
+            if (origin != lastScreenOrigin || !Mathf.Approximately(ppu, lastPixelsPerUnit))
+            {
+                lastScreenOrigin = origin;
+                lastPixelsPerUnit = ppu;
+                SetVerticesDirty();
+            }
         }
 
         private static Vector2 RatePoint(float x, float rate, float bottom, float top)
