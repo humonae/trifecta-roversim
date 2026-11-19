@@ -76,11 +76,14 @@ namespace Training
         private Func<string> progressDetail;
         private Func<float> progressValue;
         private float progressStarted;
+        // Set by ShowWaiting: the title gets 1-3 cycling dots appended.
+        private string waitingTitle;
 
         private float WindowWidth => width > 0f ? Mathf.Max(300f, width) : textSize * WidthPerTextSize;
 
         public bool IsOpen => canvasObject != null && canvasObject.activeSelf;
         public bool ShowsProgress => IsOpen && progressValue != null;
+        public bool ShowsWaiting => IsOpen && waitingTitle != null;
 
         public static PopupDialog FindOrCreate()
         {
@@ -96,6 +99,7 @@ namespace Training
             Build();
             progressDetail = null;
             progressValue = null;
+            waitingTitle = null;
             progressGroup.SetActive(false);
             SetTexts(titleText, messageText);
             SetButtons(buttonSpecs);
@@ -109,6 +113,7 @@ namespace Training
             Build();
             progressDetail = detail;
             progressValue = progress;
+            waitingTitle = null;
             progressStarted = Time.unscaledTime;
             progressGroup.SetActive(true);
             SetTexts(titleText, detail != null ? detail() : "");
@@ -118,33 +123,59 @@ namespace Training
             Open();
         }
 
+        // A popup whose title animates "Title." -> ".." -> "..." -> "." so it's obvious the app hasn't frozen.
+        // No progress bar. detail is read every frame and shown under the title (null or empty hides it).
+        public void ShowWaiting(string titleText, Func<string> detail, params PopupButton[] buttonSpecs)
+        {
+            Build();
+            progressDetail = detail;
+            progressValue = null;
+            waitingTitle = titleText ?? "";
+            progressStarted = Time.unscaledTime;
+            progressGroup.SetActive(false);
+            SetTexts(waitingTitle + ".", detail != null ? detail() : "");
+            SetButtons(buttonSpecs);
+            Open();
+        }
+
         public void Hide()
         {
             progressDetail = null;
             progressValue = null;
+            waitingTitle = null;
             if (canvasObject != null)
                 canvasObject.SetActive(false);
         }
 
         private void Update()
         {
-            if (!ShowsProgress)
+            if (!ShowsProgress && !ShowsWaiting)
                 return;
 
             if (progressDetail != null)
             {
-                string detail = progressDetail();
+                string detail = progressDetail() ?? "";
                 if (detail != message.text)
                     SetMessage(detail);
             }
 
-            SetFill(progressValue());
-
-            // "Please wait." -> ".." -> "..." -> "." again, so it's obvious the app hasn't frozen.
+            // 1 -> 2 -> 3 dots, then back to 1, so it's obvious the app hasn't frozen.
             int dots = 1 + (int)((Time.unscaledTime - progressStarted) / dotInterval) % 3;
-            string wait = WaitText + new string('.', dots);
-            if (waitLabel.text != wait)
-                waitLabel.text = wait;
+
+            if (waitingTitle != null)
+            {
+                string animated = waitingTitle + new string('.', dots);
+                if (title.text != animated)
+                    title.text = animated;
+            }
+
+            if (progressValue != null)
+            {
+                SetFill(progressValue());
+                string wait = WaitText + new string('.', dots);
+                if (waitLabel.text != wait)
+                    waitLabel.text = wait;
+            }
         }
 
         private void Open()
