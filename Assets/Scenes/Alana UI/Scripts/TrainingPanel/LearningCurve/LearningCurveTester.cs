@@ -12,6 +12,7 @@ namespace Training
     public class LearningCurveTester : MonoBehaviour
     {
         public enum OnPlay { Nothing, Fill, Live }
+        public enum DataSource { RealReport, FixedBlocks }
 
         [Tooltip("Empty: uses the curve on this object, or the first one in the scene.")]
         [SerializeField] private LearningCurve curve;
@@ -25,7 +26,24 @@ namespace Training
         [Tooltip("Which metric the main line shows. Change it while playing to compare the views.")]
         [SerializeField] private CurveMetric metric = CurveMetric.SuccessRate;
 
-        [Header("Fake data")]
+        [Header("Data source")]
+        [Tooltip("Real Report: fake episodes go through TrainingReport exactly like a training run, so the curve gets one point " +
+                 "per episode and merges points past Max Progress Points, with the newest point at the right edge. " +
+                 "Fixed Blocks: the original fake blocks below.")]
+        [SerializeField] private DataSource source = DataSource.RealReport;
+
+        [Header("Real Report")]
+        [Tooltip("How many fake episodes Fill creates (the live test adds them a few at a time up to this). " +
+                 "Try 2, 150, 200, 201, 450 and 5000 to see one point per episode and the pairs merging.")]
+        [SerializeField, Min(1)] private int episodes = 450;
+        [Tooltip("Same as TrainingOrganizer's report setting: the most points the curve holds before they merge in pairs.")]
+        [SerializeField, Min(2)] private int maxProgressPoints = 200;
+        [Tooltip("Same as TrainingOrganizer's report setting: each point shows the last this-many episodes up to it. 0 = off.")]
+        [SerializeField, Min(0)] private int progressWindow = 20;
+        [Tooltip("Live test: episodes added per tick.")]
+        [SerializeField, Min(1)] private int episodesPerTick = 3;
+
+        [Header("Fixed Blocks")]
         [SerializeField, Min(1)] private int blocks = 20;
         [SerializeField, Min(2)] private int blockSize = 50;
         [SerializeField, Range(0f, 1f)] private float successAtStart = 0.15f;
@@ -41,6 +59,16 @@ namespace Training
         [Tooltip("Timeouts. Starts lower and falls slowly: the rover still wanders sometimes.")]
         [SerializeField, Range(0f, 1f)] private float timeoutShareStart = 0.3f;
         [SerializeField, Range(0f, 1f)] private float timeoutShareEnd = 0.6f;
+
+        [Header("Real Report: how the model learns")]
+        [Tooltip("How far through the run the model improves fastest (0 = start, 1 = end). Before it the curve is a slow start, after it a plateau.")]
+        [SerializeField, Range(0f, 1f)] private float learnAt = 0.4f;
+        [Tooltip("How sudden the improvement is: low = gradual, high = a sharp jump.")]
+        [SerializeField, Range(1f, 20f)] private float learnSharpness = 8f;
+        [Tooltip("Slow ups and downs in skill over the run, like real training: plateaus and small setbacks. 0 = a perfectly smooth trend.")]
+        [SerializeField, Range(0f, 0.2f)] private float skillWander = 0.05f;
+        [Tooltip("Episode length in seconds; timeouts last this long.")]
+        [SerializeField, Min(1f)] private float episodeSeconds = 120f;
 
         [Header("Live test")]
         [SerializeField, Min(0.05f)] private float liveInterval = 0.4f;
@@ -102,6 +130,13 @@ namespace Training
             StopLive();
             target.SetMetric(metric);
             target.SetExpectedPoints(0);
+
+            if (source == DataSource.RealReport)
+            {
+                Show(target, BuildReal(episodes));
+                return;
+            }
+
             TrainingReport report = Build(blocks);
             target.SetFromReport(report);
             if (rewardCurve != null)
@@ -125,6 +160,15 @@ namespace Training
 
             StopLive();
             target.SetMetric(metric);
+
+            if (source == DataSource.RealReport)
+            {
+                target.SetExpectedPoints(0);
+                if (rewardCurve != null) rewardCurve.SetExpectedPoints(0);
+                live = StartCoroutine(LiveRealRoutine(target));
+                return;
+            }
+
             target.SetExpectedPoints(blocks); // fixed x-axis: the curve fills in from the left
             if (rewardCurve != null)
                 rewardCurve.SetExpectedPoints(blocks);
@@ -165,6 +209,145 @@ namespace Training
 
             live = null;
         }
+
+        // --- Real Report ------------------------------------------------------
+
+        // Feeds both curves the way TrainingMonitorView does during a run.
+        private void Show(LearningCurve target, TrainingReport report)
+        {
+            target.SetFromReport(report);
+            if (rewardCurve != null && rewardCurve != target)
+                rewardCurve.SetFromReport(report);
+        }
+
+        private TrainingReport NewReport()
+        {
+            return new TrainingReport
+            {
+                IterationUnit = "Episodes",
+                IterationsPlanned = episodes,
+                Settings = new TrainingReportSettings { MaxProgressPoints = maxProgressPoints, ProgressWindow = progressWindow }
+            };
+        }
+
+        // Fake episodes 1..count, recalculated once at the end.
+        private TrainingReport BuildReal(int count)
+        {
+            var run = new FakeRun(this);
+            TrainingReport report = NewReport();
+            for (int i = 0; i < count; i++)
+                report.AttemptLog.Add(run.Next(i));
+            report.Recalculate(null);
+            return report;
+        }
+
+        // Adds episodes a few at a time and recalculates after each one, like a real run.
+        private IEnumerator LiveRealRoutine(LearningCurve target)
+        {
+            var wait = new WaitForSecondsRealtime(liveInterval);
+            var run = new FakeRun(this);
+            TrainingReport report = NewReport();
+
+            for (int i = 0; i < episodes; i++)
+            {
+                report.AttemptLog.Add(run.Next(i));
+                report.Recalculate(null);
+                if ((i + 1) % episodesPerTick == 0 || i == episodes - 1)
+                {
+                    Show(target, report);
+                    yield return wait;
+                }
+            }
+
+            live = null;
+        }
+
+        // Generates a believable run, one episode at a time.
+        //  - Skill (the chance of reaching the goal) follows an S-curve: a slow start, a learning phase around
+        //    "Learn At", then a plateau. On top of that it wanders slowly (plateaus, small setbacks), the way
+        //    real training does. It never jumps from one episode to the next.
+        //  - Each episode then succeeds or fails at random with that skill, like a real rover. So with one
+        //    episode per point the success line still goes 0% / 100%: that part is real, not the tester.
+        //  - Reward is built the way the rover's reward is: progress toward the goal, minus a time penalty,
+        //    plus +1 for the goal or -1 for flipping / leaving the map (timeouts get no end penalty).
+        //    Failed episodes still earn progress, and more of it as skill rises, so reward climbs smoothly.
+        private class FakeRun
+        {
+            private readonly LearningCurveTester t;
+            private readonly System.Random random;
+            private float wander;
+
+            public FakeRun(LearningCurveTester tester)
+            {
+                t = tester;
+                random = new System.Random(tester.seed);
+            }
+
+            public TrainingAttempt Next(int index)
+            {
+                float progress = t.episodes > 1 ? Mathf.Clamp01(index / (float)(t.episodes - 1)) : 0f;
+
+                // Slow random drift, about +/- skillWander, changing over roughly 50 episodes.
+                wander = wander * 0.98f + Gaussian() * t.skillWander * 0.2f;
+                float skill = Mathf.Clamp(Mathf.Lerp(t.successAtStart, t.successAtEnd, SCurve(progress)) + wander, 0.02f, 0.98f);
+
+                bool success = random.NextDouble() < skill;
+                EpisodeOutcome outcome = EpisodeOutcome.ReachedGoal;
+                bool hitRock = false;
+                float reached; // share of the distance to the goal covered
+                float seconds;
+
+                if (success)
+                {
+                    reached = 1f;
+                    seconds = Mathf.Clamp(Mathf.Lerp(0.6f, 0.3f, skill) * t.episodeSeconds + Gaussian() * 4f, 10f, t.episodeSeconds);
+                }
+                else
+                {
+                    float timeoutShare = Mathf.Lerp(t.timeoutShareStart, t.timeoutShareEnd, progress);
+                    float collisionShare = Mathf.Lerp(t.collisionShareStart, t.collisionShareEnd, progress);
+                    double pick = random.NextDouble();
+                    outcome = pick < timeoutShare ? EpisodeOutcome.TimedOut
+                            : pick < timeoutShare + (1f - timeoutShare) * 0.5f ? EpisodeOutcome.Flipped
+                            : EpisodeOutcome.OutOfBounds;
+                    hitRock = random.NextDouble() < collisionShare;
+
+                    reached = Mathf.Clamp(skill * 0.8f + Gaussian() * 0.15f, 0f, 0.95f);
+                    seconds = outcome == EpisodeOutcome.TimedOut
+                        ? t.episodeSeconds
+                        : Mathf.Lerp(0.1f, 0.8f, (float)random.NextDouble()) * t.episodeSeconds;
+                }
+
+                float terminal = success ? 1f : outcome == EpisodeOutcome.TimedOut ? 0f : -1f;
+                float reward = 1.5f * reached - 0.01f * seconds + terminal + Gaussian() * 0.05f;
+
+                const float startDistance = 40f;
+                TrainingAttempt attempt = TrainingAttempt.From(outcome, seconds, reward, startDistance, startDistance * (1f - reached),
+                                                               hitRock, false, Vector3.zero, Vector3.zero);
+                attempt.Episode = index + 1;
+                attempt.Tile = "Test";
+                return attempt;
+            }
+
+            // 0 at the start of the run, 1 at the end, steepest at Learn At.
+            private float SCurve(float x)
+            {
+                float k = t.learnSharpness, m = t.learnAt;
+                float f0 = Logistic(-k * m), f1 = Logistic(k * (1f - m));
+                return (Logistic(k * (x - m)) - f0) / Mathf.Max(1e-5f, f1 - f0);
+            }
+
+            private static float Logistic(float x) => 1f / (1f + Mathf.Exp(-x));
+
+            // Standard normal (Box-Muller).
+            private float Gaussian()
+            {
+                double u1 = 1.0 - random.NextDouble(), u2 = random.NextDouble();
+                return (float)(System.Math.Sqrt(-2.0 * System.Math.Log(u1)) * System.Math.Cos(2.0 * System.Math.PI * u2));
+            }
+        }
+
+        // --- Fixed Blocks -----------------------------------------------------
 
         // A report holding the first `count` blocks.
         private TrainingReport Build(int count)
