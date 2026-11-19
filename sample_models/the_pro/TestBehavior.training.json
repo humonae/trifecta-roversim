@@ -1,0 +1,23 @@
+{
+    "Model": "trained_model",
+    "RunId": "trained_model_20261118_063018",
+    "Map": "Jezero",
+    "Tiles": [
+        "B4",
+        "B2",
+        "D5",
+        "C6",
+        "B6",
+        "B5",
+        "C2",
+        "B3",
+        "C4",
+        "D4",
+        "D3",
+        "D6"
+    ],
+    "FinishedAt": "2026-11-18T14:24:54",
+    "Seed": 0,
+    "InitializedFrom": "G:\\UnityProjects\\trifecta-roversim-pt\\trifecta-roversim\\sample_models\\trained_model_the_rookie_checkpoint.pt",
+    "InitializedFromStep": 512
+}
